@@ -13,6 +13,8 @@ from typing import Any, Callable, Optional, Sequence
 from saaga.core.scenario import DefenseScenario
 from saaga.engine.batch_runner import run_scenarios_batched
 from saaga.providers.base import BaseLLMProvider
+from saaga.evaluators.shape_predictor import AccessCodePredictor
+from saaga.evaluators.defense_classifier import DefenseClassifier
 from saaga.reporting.layout import run_filename, runs_root
 
 logger = logging.getLogger(__name__)
@@ -70,6 +72,9 @@ def execute_benchmark(
     all_runs = []
     total_wins = 0
 
+    access_code_predictor = AccessCodePredictor()
+    defense_classifier = DefenseClassifier()
+
     # Process in batches
     for i in range(0, total, batch_size):
         chunk = scenarios[i : i + batch_size]
@@ -80,6 +85,8 @@ def execute_benchmark(
             generator_provider=victim_provider,
             max_attempts=max_attempts,
             enable_fallback=enable_fallback,
+            access_code_predictor=access_code_predictor,
+            defense_classifier=defense_classifier,
         )
 
         for j, run_json in enumerate(runs):

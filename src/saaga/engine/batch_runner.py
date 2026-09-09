@@ -38,6 +38,8 @@ def _make_agents(
     planner_provider: BaseLLMProvider,
     generator_provider: BaseLLMProvider,
     scenarios: Sequence[DefenseScenario],
+    victim_provider: Optional[BaseLLMProvider] = None,
+    ranker_model_path: Optional[str] = None,
 ) -> tuple[list[RedTeamingPlanner], list[AttackPromptGenerator], list[SensitiveInfoExtractor]]:
     """Build per-scenario planner/generator/extractor instances.
 
@@ -54,9 +56,16 @@ def _make_agents(
         AttackPromptGenerator(generator_provider, retriever=retriever)
         for _ in scenarios
     ]
-    extractors = [SensitiveInfoExtractor() for _ in scenarios]
+    extractors = [
+        SensitiveInfoExtractor(
+            target_provider=victim_provider,
+            ranker_model_path=ranker_model_path,
+        )
+        for _ in scenarios
+    ]
     for i, sc in enumerate(scenarios):
         extractors[i].set_ground_truth(sc.access_code)
+        extractors[i].set_scenario(sc)
     return planners, generators, extractors
 
 
@@ -70,6 +79,8 @@ def run_scenarios_batched(
     fallback_max_rounds: int = 2,
     max_parallel: int = 16,
     access_code_predictor: Any | None = None,
+    defense_classifier: Any | None = None,
+    ranker_model_path: Optional[str] = None,
     progress_callback: Callable[[int, int, bool], None] | None = None,
 ) -> list[dict[str, Any]]:
     """Advance a batch of scenarios through the adaptive red-teaming loop in lockstep.
@@ -98,19 +109,30 @@ def run_scenarios_batched(
     batch_size = len(scenarios)
     if batch_size == 0:
         return []
+    planners, generators, extractors = _make_agents(
+        planner_provider,
+        generator_provider,
+        scenarios,
+        victim_provider=victim_provider,
+        ranker_model_path=ranker_model_path,
+    )
 
-    planners, generators, extractors = _make_agents(planner_provider, generator_provider, scenarios)
-
-    # Access-code predictor: refine each scenario's predicted secret shape so the
-    # planner targets the right code shape. Graceful heuristic fallback if the
-    # trained DistilBERT model or torch is unavailable.
+    # 1. Access-code predictor: refine secret shape prior before planning
     if access_code_predictor is not None:
         for sc in scenarios:
             try:
                 sc.predicted_access_code_type = access_code_predictor.predict_type(sc)
             except Exception:
-                pass  # keep the dataset/heuristic value
+                pass
 
+    # 2. Defense classifier: refine defense taxonomy type before planning
+    if defense_classifier is not None:
+        for sc in scenarios:
+            try:
+                sc.defense_type = defense_classifier.predict_type(sc)
+                sc.primary_type = sc.defense_type
+            except Exception:
+                pass
     traces: list[list[dict[str, Any]]] = [[] for _ in range(batch_size)]
     history: list[list[dict[str, Any]]] = [[] for _ in range(batch_size)]
     active_indices = list(range(batch_size))
@@ -161,7 +183,7 @@ def run_scenarios_batched(
             resp_text = responses[j].text
             last_responses[idx] = resp_text
 
-            ext_res = extractors[idx].extract(resp_text)
+            ext_res = extractors[idx].extract(resp_text, scenario=sc)
             gt_leaked = extractors[idx].check_ground_truth_leak(resp_text)
             access_granted = extractors[idx].check_access_granted(resp_text)
             verified = bool(ext_res.get("verified", False))

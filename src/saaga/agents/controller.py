@@ -47,6 +47,9 @@ class RedTeamingController:
         self.kb_updater = kb_updater
         self.max_attempts = max_attempts
         self.verbose = verbose
+        # Wire live victim target provider into extractor for Layer 6 active replay verification
+        if hasattr(self.extractor, "set_target_provider"):
+            self.extractor.set_target_provider(self.victim)
 
     def run_scenario(self, scenario: DefenseScenario, scenario_id: Optional[str] = None) -> dict[str, Any]:
         """Execute a complete adaptive red-teaming session against a single defense scenario."""
@@ -57,6 +60,8 @@ class RedTeamingController:
         self.generator.reset()
         self.extractor.reset()
         self.extractor.set_ground_truth(scenario.access_code)
+        if hasattr(self.extractor, "set_scenario"):
+            self.extractor.set_scenario(scenario)
 
         trace: list[dict[str, Any]] = []
         events: list[dict[str, Any]] = [
@@ -113,7 +118,7 @@ class RedTeamingController:
             )
 
             # 5. Extraction & Replay Verification
-            extract_res = self.extractor.extract(raw_response)
+            extract_res = self.extractor.extract(raw_response, scenario=scenario)
             gt_leaked = self.extractor.check_ground_truth_leak(raw_response)
             access_granted = self.extractor.check_access_granted(raw_response)
             verified = extract_res.get("verified", False)

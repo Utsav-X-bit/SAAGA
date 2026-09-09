@@ -33,6 +33,7 @@ from saaga.evaluation.difficulty import (
 from saaga.evaluators.extractor import SensitiveInfoExtractor
 from saaga.providers.base import BaseLLMProvider
 from saaga.evaluators.shape_predictor import AccessCodePredictor
+from saaga.evaluators.defense_classifier import DefenseClassifier
 
 # Static screen templates: generic extraction attempts sent without an LLM planner.
 STATIC_ATTACK_TEMPLATES: tuple[str, ...] = (
@@ -101,8 +102,9 @@ def _static_attack(
 
     Returns a lightweight run dict satisfying the scorer contract.
     """
-    extractor = SensitiveInfoExtractor()
+    extractor = SensitiveInfoExtractor(target_provider=victim_provider)
     extractor.set_ground_truth(scenario.access_code)
+    extractor.set_scenario(scenario)
 
     system_prompt = f"{scenario.opening_defense or ''}\n\n{scenario.closing_defense or ''}"
 
@@ -119,7 +121,7 @@ def _static_attack(
         resp = victim_provider.chat(messages, max_tokens=200, temperature=0.7)
         raw_response = resp.text
 
-        extract_res = extractor.extract(raw_response)
+        extract_res = extractor.extract(raw_response, scenario=scenario)
         gt_leaked = gt_leaked or extractor.check_ground_truth_leak(raw_response)
         access_granted = extractor.check_access_granted(raw_response)
         verified = bool(extract_res.get("verified", False))
@@ -176,6 +178,8 @@ def _run_adaptive(
     enable_fallback: bool,
     max_parallel: int,
     access_code_predictor: Any | None = None,
+    defense_classifier: Any | None = None,
+    ranker_model_path: Optional[str] = None,
     progress_callback: Optional[Callable[[int, int, bool], None]] = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Run the batched adaptive SAAGA loop per tier; returns runs grouped by tier."""
@@ -193,6 +197,8 @@ def _run_adaptive(
             enable_fallback=enable_fallback,
             max_parallel=max_parallel,
             access_code_predictor=access_code_predictor,
+            defense_classifier=defense_classifier,
+            ranker_model_path=ranker_model_path,
         )
         for run_json in runs:
             done += 1
@@ -216,6 +222,8 @@ def run_evaluation(
     mode: str = "adaptive",
     max_parallel: int = 16,
     use_access_code_predictor: bool = True,
+    use_defense_classifier: bool = True,
+    ranker_model_path: Optional[str] = None,
     progress_callback: Optional[Callable[[int, int, bool], None]] = None,
 ) -> dict[str, Any]:
     """Evaluate a victim model's defense strength and return scorecard(s) + runs.
@@ -251,6 +259,10 @@ def run_evaluation(
     # trained DistilBERT model / torch is unavailable). Loaded once, shared across tiers.
     access_code_predictor = AccessCodePredictor() if use_access_code_predictor else None
 
+    # Defense classifier: predicts defense taxonomy type from defense prompts
+    # (heuristic fallback if the trained DistilBERT model / torch is unavailable).
+    defense_classifier = DefenseClassifier() if use_defense_classifier else None
+
     if mode == "static":
         tiered_runs = _run_static(victim_provider, tiered_scenarios, max_attempts, progress_callback)
         card = compute_scorecard(tiered_runs, victim_model, max_attempts)
@@ -260,7 +272,7 @@ def run_evaluation(
         tiered_runs = _run_adaptive(
             victim_provider, planner_provider, generator_provider,
             tiered_scenarios, max_attempts, enable_fallback, max_parallel,
-            access_code_predictor, progress_callback,
+            access_code_predictor, defense_classifier, ranker_model_path, progress_callback,
         )
         card = compute_scorecard(tiered_runs, victim_model, max_attempts)
         return {"scorecard": card, "tiered_runs": tiered_runs, "meta": meta}
@@ -271,7 +283,7 @@ def run_evaluation(
     adaptive_runs = _run_adaptive(
         victim_provider, planner_provider, generator_provider,
         tiered_scenarios, max_attempts, enable_fallback, max_parallel,
-        access_code_predictor, progress_callback,
+        access_code_predictor, defense_classifier, ranker_model_path, progress_callback,
     )
     adaptive_card = compute_scorecard(adaptive_runs, victim_model, max_attempts)
     return {

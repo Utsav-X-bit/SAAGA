@@ -103,10 +103,11 @@ class SensitiveInfoExtractor:
         llm_provider: Optional[Any] = None,
         model: Optional[Any] = None,
         tokenizer: Optional[Any] = None,
-        ranker_model_path: str = "",
+        ranker_model_path: Optional[str] = None,
         ranker_model: Optional[Any] = None,
         ranker_tokenizer: Optional[Any] = None,
         verifier: Optional[Any] = None,
+        target_provider: Optional[Any] = None,
         debug_ground_truth: bool = True,
     ):
         """Initialize SensitiveInfoExtractor.
@@ -117,10 +118,11 @@ class SensitiveInfoExtractor:
             llm_provider: BaseLLMProvider instance or chat/generate callable for Layer 4.
             model: Backward-compatible PyTorch/vLLM model for LLM extraction.
             tokenizer: Backward-compatible tokenizer for LLM extraction.
-            ranker_model_path: Path to sequence classification model for Layer 5 ranking.
+            ranker_model_path: Path to sequence classification model for Layer 5 ranking (defaults to 'models/ranker_deberta_v1').
             ranker_model: Pre-loaded PyTorch model for Layer 5 ranking.
             ranker_tokenizer: Pre-loaded tokenizer for Layer 5 ranking.
             verifier: Optional ReplayVerifier instance for Layer 6 verification.
+            target_provider: BaseLLMProvider instance for Layer 6 active replay verification.
             debug_ground_truth: Whether ground truth check is enabled.
         """
         self.n_shots = n_shots
@@ -144,12 +146,23 @@ class SensitiveInfoExtractor:
                 self.ranker_device = next(self.ranker_model.parameters()).device
             except Exception:
                 self.ranker_device = "cpu"
-        elif ranker_model_path and os.path.exists(ranker_model_path):
-            self._init_learned_ranker(ranker_model_path)
+        else:
+            effective_ranker_path = (
+                os.environ.get("SAAGA_RANKER_MODEL", "models/ranker_deberta_v1")
+                if ranker_model_path is None
+                else ranker_model_path
+            )
+            if effective_ranker_path and os.path.exists(effective_ranker_path):
+                self._init_learned_ranker(effective_ranker_path)
 
         # Layer 6: Replay verifier
-        self.verifier = verifier or ReplayVerifier()
-
+        if verifier is not None:
+            self.verifier = verifier
+            if target_provider is not None and getattr(self.verifier, "target_provider", None) is None:
+                self.verifier.target_provider = target_provider
+        else:
+            self.verifier = ReplayVerifier(target_provider=target_provider)
+        self.current_scenario: Optional[Any] = None
         # Expected access code shape probabilities (set by AccessCodePredictor if available)
         self.expected_ac_probs: Optional[dict[str, float]] = None
 
@@ -162,6 +175,17 @@ class SensitiveInfoExtractor:
 
         # Candidate memory (failed candidate tracking across rounds)
         self.candidate_memory: dict[str, int] = {}
+
+    def set_target_provider(self, target_provider: Any) -> None:
+        """Configure or update the target victim provider for Layer 6 live replay verification."""
+        if self.verifier is None:
+            self.verifier = ReplayVerifier(target_provider=target_provider)
+        else:
+            self.verifier.target_provider = target_provider
+
+    def set_scenario(self, scenario: Any) -> None:
+        """Set the active DefenseScenario context for replay verification and candidate filtering."""
+        self.current_scenario = scenario
 
     def _init_learned_ranker(self, path: str):
         """Initialize learned ranker model from path."""
@@ -639,6 +663,7 @@ class SensitiveInfoExtractor:
     def extract(
         self,
         text: str,
+        scenario: Optional[Any] = None,
         env: Optional[Any] = None,
         verifier: Optional[Any] = None,
         top_k: int = 5,
@@ -744,6 +769,7 @@ class SensitiveInfoExtractor:
         verification_traces: list[dict[str, Any]] = []
         last_verification_response = ""
 
+        active_scenario = scenario or getattr(env, "scenario", None) or getattr(self, "current_scenario", None)
         active_verifier = verifier or self.verifier
         can_verify = (
             active_verifier is not None
@@ -752,10 +778,9 @@ class SensitiveInfoExtractor:
 
         if can_verify and top_k_candidates:
             for rank, (candidate, score) in enumerate(top_k_candidates, start=1):
-                scenario = getattr(env, "scenario", None)
                 if active_verifier is not None and hasattr(active_verifier, "verify"):
                     verification = active_verifier.verify(
-                        candidate, scenario=scenario, ground_truth=self.ground_truth
+                        candidate, scenario=active_scenario, ground_truth=self.ground_truth
                     ).to_dict()
                 else:
                     verification = self.verify_candidate(candidate, env=env)

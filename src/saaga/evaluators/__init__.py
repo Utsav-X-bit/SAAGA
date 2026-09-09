@@ -5,6 +5,7 @@ Provides modular, robust evaluation and extraction components:
 - `ReplayVerifier`: Standalone replay verification querying victim models with candidate secrets.
 - `StopPointIdentifier`: DistilBERT binary judge with lazy loading and heuristic fallback.
 - `AccessCodePredictor`: DistilBERT 4-class secret shape classifier with heuristic fallback.
+- `DefenseClassifier`: DistilBERT 8-class prompt defense taxonomy classifier with heuristic fallback.
 """
 from __future__ import annotations
 
@@ -21,6 +22,10 @@ from saaga.evaluators.shape_predictor import (
     AccessCodePredictor,
     AccessCodeType,
     heuristic_categorize_code,
+)
+from saaga.evaluators.defense_classifier import (
+    DefenseClassifier,
+    DefenseType,
 )
 from saaga.evaluators.verifier import (
     ReplayVerifier,
@@ -42,4 +47,6 @@ __all__ = [
     "AccessCodePredictor",
     "AccessCodeType",
     "heuristic_categorize_code",
+    "DefenseClassifier",
+    "DefenseType",
 ]

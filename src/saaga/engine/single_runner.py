@@ -38,7 +38,7 @@ def run_single_scenario_verbose(
     retriever = DefenseRetriever()
     planner = RedTeamingPlanner(p_prov, kb=kb, retriever=retriever)
     generator = AttackPromptGenerator(g_prov, retriever=retriever)
-    extractor = SensitiveInfoExtractor()
+    extractor = SensitiveInfoExtractor(target_provider=victim_provider)
     judge = StopPointIdentifier()
     fallback = MutationFallback() if enable_fallback else None
     kb_updater = KBUpdater(mode="run")
