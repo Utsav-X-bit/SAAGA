@@ -40,7 +40,7 @@ class OpenAIProvider(BaseLLMProvider):
         api_base: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
-        timeout: float = 60.0,
+        timeout: float = 300.0,
         max_retries: int = 3,
         retry_delay: float = 1.0,
         max_workers: int = 16,

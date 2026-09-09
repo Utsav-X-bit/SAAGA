@@ -374,6 +374,8 @@ def download_data_command(target_dir: str, gdrive_folder_id: str, rclone_remote:
 @click.option("--seed", default=42, type=int, help="RNG seed for reproducible stratified sampling.")
 @click.option("--enable-fallback/--no-fallback", default=True, help="Enable mutation fallback in the adaptive attack.")
 @click.option("--max-parallel", default=16, type=int, help="Max concurrent planner/generator calls per adaptive round.")
+@click.option("--provider-timeout", default=300, type=int, help="HTTP read timeout (s) for LLM provider requests.")
+@click.option("--provider-workers", default=16, type=int, help="Max concurrent HTTP requests per provider (victim batch concurrency).")
 @click.option("--output-dir", "-o", default=None, help="Directory for scorecard artifacts (default results/eval/<model>/).")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress verbose terminal output.")
 def evaluate_command(
@@ -395,6 +397,8 @@ def evaluate_command(
     seed: int,
     enable_fallback: bool,
     max_parallel: int,
+    provider_timeout: int,
+    provider_workers: int,
     output_dir: Optional[str],
     quiet: bool,
 ):
@@ -412,6 +416,8 @@ def evaluate_command(
         model_id=victim_model,
         api_base=victim_url,
         api_key=victim_api_key,
+        timeout=provider_timeout,
+        max_workers=provider_workers,
     )
 
     # Attacker (planner/generator) providers: pinned to base LoRA unless overridden.
@@ -421,12 +427,16 @@ def evaluate_command(
             model_id=planner_model or base_model,
             api_base=base_model_url or victim_url,
             api_key=base_model_api_key or victim_api_key,
+            timeout=provider_timeout,
+            max_workers=provider_workers,
         )
         g_prov = get_provider(
             provider_type=base_model_provider,
             model_id=generator_model or base_model,
             api_base=base_model_url or victim_url,
             api_key=base_model_api_key or victim_api_key,
+            timeout=provider_timeout,
+            max_workers=provider_workers,
         )
     else:
         p_prov = v_prov
