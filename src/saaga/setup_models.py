@@ -18,6 +18,7 @@ from typing import Optional
 DEFAULT_GDRIVE_FOLDER_ID = os.environ.get(
     "SAAGA_GDRIVE_FOLDER_ID", "1BU6x9tzA9EPhMAIjaKlTAig85IZ3pSZY"
 )
+DEFAULT_RCLONE_REMOTE = os.environ.get("SAAGA_RCLONE_REMOTE", "gdrive")
 
 # HuggingFace Hub models
 DEFAULT_MODELS = {
@@ -25,30 +26,35 @@ DEFAULT_MODELS = {
         "repo_id": "meta-llama/Meta-Llama-3-8B-Instruct",
         "type": "causal_lm",
         "description": "Default target victim model",
+        "size_str": "~16 GB",
         "source": "hf",
     },
     "base_lora": {
         "repo_id": "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2",
         "type": "causal_lm",
         "description": "Shared uncensored base model for planner and generator LoRA adapters",
+        "size_str": "~16 GB",
         "source": "hf",
     },
     "judge": {
         "repo_id": "distilbert/distilbert-base-uncased",
         "type": "classifier",
         "description": "DistilBERT stop-point identifier classifier",
+        "size_str": "~260 MB",
         "source": "hf",
     },
     "embedding": {
         "repo_id": "sentence-transformers/all-MiniLM-L6-v2",
         "type": "embedding",
         "description": "Sentence embedding model for RAG defense retrieval",
+        "size_str": "~90 MB",
         "source": "hf",
     },
     "translation": {
         "repo_id": "facebook/nllb-200-distilled-600M",
         "type": "seq2seq",
         "description": "NLLB-200 distilled offline translation model for mutation fallback",
+        "size_str": "~2.4 GB",
         "source": "hf",
     },
 }
@@ -59,54 +65,63 @@ GDRIVE_COMPONENTS = {
         "remote_path": "experiment/access_code_predictor",
         "default_dest": "experiment/access_code_predictor",
         "description": "Trained DistilBERT Access Code Predictor model and tokenizers",
+        "size_str": "1.75 GB",
         "source": "gdrive",
     },
     "ranker": {
         "remote_path": "models/ranker_deberta_v1",
         "default_dest": "models/ranker_deberta_v1",
         "description": "Trained DeBERTa-v3 Ranker model checkpoint",
+        "size_str": "3.65 GB",
         "source": "gdrive",
     },
     "defense-classifier": {
         "remote_path": "models/defense_classifier",
         "default_dest": "models/defense_classifier",
         "description": "Trained DistilBERT Defense Classifier checkpoints",
+        "size_str": "3.65 GB",
         "source": "gdrive",
     },
     "pi-reward-model": {
         "remote_path": "pre_trained/pi_reward_model",
         "default_dest": "pre_trained/pi_reward_model",
         "description": "Pre-trained Pi Reward Model / DistilBERT Stop Judge",
+        "size_str": "256 MB",
         "source": "gdrive",
     },
     "generator-lora": {
         "remote_path": "experiment/results/generator_sft_v2",
         "default_dest": "experiment/results/generator_sft_v2",
         "description": "Trained Generator SFT v2 LoRA adapter",
+        "size_str": "5.3 GB",
         "source": "gdrive",
     },
     "planner-lora": {
         "remote_path": "experiment/results/planner_sft_v2_contract_anchor",
         "default_dest": "experiment/results/planner_sft_v2_contract_anchor",
         "description": "Trained Planner SFT v2 Contract Anchor LoRA adapter",
+        "size_str": "2.3 GB",
         "source": "gdrive",
     },
     "planner-repair-lora": {
         "remote_path": "experiment/results/planner_sft_v2_contract_repair",
         "default_dest": "experiment/results/planner_sft_v2_contract_repair",
         "description": "Trained Planner SFT v2 Contract Repair LoRA adapter",
+        "size_str": "1.3 GB",
         "source": "gdrive",
     },
     "qlo-lora": {
         "remote_path": "experiment/results/qlo_curriculum_v1",
         "default_dest": "experiment/results/qlo_curriculum_v1",
         "description": "Trained QLO Curriculum v1 LoRA adapter",
+        "size_str": "5.3 GB",
         "source": "gdrive",
     },
     "data": {
         "remote_path": "data",
         "default_dest": "data",
         "description": "Large dataset files (.jsonl, .db, and TensorTrust subsets)",
+        "size_str": "3.0 GB",
         "source": "gdrive",
     },
 }
@@ -160,32 +175,117 @@ def resolve_component_name(name: str) -> str:
     return COMPONENT_ALIASES.get(cleaned, COMPONENT_ALIASES.get(name.strip().lower(), name.strip().lower()))
 
 
+def check_rclone_status(remote_name: str = DEFAULT_RCLONE_REMOTE) -> tuple[bool, bool, str]:
+    """Check whether rclone binary exists and whether the specified remote is configured.
+
+    Returns:
+        (is_installed, is_remote_configured, clean_remote_name)
+    """
+    clean_name = remote_name.rstrip(":")
+    rclone_bin = shutil.which("rclone")
+    if not rclone_bin:
+        return False, False, clean_name
+
+    try:
+        res = subprocess.run(
+            [rclone_bin, "listremotes"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+        configured_remotes = [r.strip().rstrip(":") for r in res.stdout.splitlines() if r.strip()]
+        return True, (clean_name in configured_remotes), clean_name
+    except Exception:
+        return True, False, clean_name
+
+
+def print_rclone_guide(
+    component_name: str,
+    size_str: str,
+    remote_path: str,
+    target_dest: str | Path,
+    folder_id: str = DEFAULT_GDRIVE_FOLDER_ID,
+    remote_name: str = DEFAULT_RCLONE_REMOTE,
+) -> None:
+    """Display an informative terminal banner explaining that rclone is needed to download the asset."""
+    clean_remote = remote_name.rstrip(":")
+    print("\n" + "=" * 78)
+    print(f"  [SAAGA Cloud Storage Notice] Download '{component_name}' ({size_str})")
+    print("=" * 78)
+    print(f"  Component       : {component_name}")
+    print(f"  Estimated Size  : {size_str}")
+    print(f"  Target Path     : {target_dest}")
+    print(f"  Source Folder   : Google Drive Public Repository")
+    print(f"  Folder ID       : {folder_id}")
+    print(f"  Required Remote : {clean_remote}:")
+    print("-" * 78)
+    print("  To download this large model/dataset, rclone is required.")
+    print("  Please follow these setup steps:\n")
+    print("  1. Install rclone:")
+    print("     curl https://rclone.org/install.sh | sudo bash")
+    print("     # Or user-local install (no root needed):")
+    print("     curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip")
+    print("     unzip rclone-current-linux-amd64.zip && cp rclone-*/rclone ~/.local/bin/\n")
+    print(f"  2. Configure the '{clean_remote}' remote in rclone:")
+    print(f"     rclone config")
+    print(f"     -> Select 'n' (New remote)")
+    print(f"     -> Name: {clean_remote}")
+    print(f"     -> Storage type: drive (Google Drive)")
+    print(f"     -> Scope: 1 (full) or 2 (read-only)\n")
+    print("  3. Direct download command:")
+    print(f"     rclone copy {clean_remote}:{remote_path} {target_dest} --drive-root-folder-id {folder_id} --progress\n")
+    print("  Alternative (via Python gdown):")
+    print("     pip install gdown")
+    print(f"     gdown --folder https://drive.google.com/drive/folders/{folder_id} -O {target_dest}")
+    print("=" * 78 + "\n")
+
+
 def download_from_gdrive(
     remote_path: str,
     target_dir: str | Path,
+    component_name: str = "asset",
+    size_str: str = "unknown size",
     folder_id: str = DEFAULT_GDRIVE_FOLDER_ID,
+    remote_name: str = DEFAULT_RCLONE_REMOTE,
 ) -> Path:
-    """Download files from public Google Drive folder using rclone, gdown, or direct HTTP.
+    """Download files from public Google Drive folder using rclone or gdown.
 
     Args:
-        remote_path: Relative path inside the Google Drive root folder (e.g. 'experiment/access_code_predictor')
+        remote_path: Relative path inside the Google Drive root folder
         target_dir: Local destination directory
+        component_name: Human-readable name of the component being downloaded
+        size_str: Human-readable size estimate (e.g. '1.75 GB')
         folder_id: Google Drive folder ID
+        remote_name: Name of the rclone remote (default 'gdrive')
 
     Returns:
         Path to local destination directory
     """
     dest = Path(target_dir)
     dest.mkdir(parents=True, exist_ok=True)
-    print(f"[*] Downloading '{remote_path}' from Google Drive (Folder ID: {folder_id}) into '{dest}'...")
+    clean_remote = remote_name.rstrip(":")
 
-    # Method 1: rclone (if configured with gdrive remote or available)
+    is_installed, is_configured, remote_target = check_rclone_status(clean_remote)
+
+    if not is_installed or not is_configured:
+        print_rclone_guide(
+            component_name=component_name,
+            size_str=size_str,
+            remote_path=remote_path,
+            target_dest=dest,
+            folder_id=folder_id,
+            remote_name=remote_target,
+        )
+
+    # Method 1: rclone (if available and configured)
     rclone_bin = shutil.which("rclone")
-    if rclone_bin:
+    if rclone_bin and is_configured:
+        print(f"[*] Downloading '{component_name}' ({size_str}) from Google Drive via rclone remote '{clean_remote}:'...")
         cmd = [
             rclone_bin,
             "copy",
-            f"gdrive:{remote_path}",
+            f"{clean_remote}:{remote_path}",
             str(dest),
             "--drive-root-folder-id",
             folder_id,
@@ -198,7 +298,7 @@ def download_from_gdrive(
             print(f"[*] Running: {' '.join(cmd)}")
             res = subprocess.run(cmd, capture_output=False, check=False)
             if res.returncode == 0:
-                print(f"[✓] Successfully downloaded '{remote_path}' to '{dest}' via rclone.")
+                print(f"[✓] Successfully downloaded '{component_name}' to '{dest}'.")
                 return dest
             else:
                 print(f"[!] rclone exited with code {res.returncode}. Trying fallback...")
@@ -210,9 +310,9 @@ def download_from_gdrive(
     if Path(gdown_bin).exists() or shutil.which("gdown"):
         bin_path = gdown_bin if Path(gdown_bin).exists() else shutil.which("gdown")
         folder_url = f"https://drive.google.com/drive/folders/{folder_id}"
-        cmd = [bin_path, "--folder", folder_url, "-O", str(dest), "--remaining-ok"]
+        print(f"[*] Attempting fallback download via gdown for '{component_name}' ({size_str})...")
+        cmd = [bin_path, "--folder", folder_url, "-O", str(dest)]
         try:
-            print(f"[*] Running: {' '.join(cmd)}")
             res = subprocess.run(cmd, capture_output=False, check=False)
             if res.returncode == 0:
                 print(f"[✓] Successfully downloaded from Google Drive via gdown.")
@@ -222,12 +322,6 @@ def download_from_gdrive(
         except Exception as e:
             print(f"[!] gdown execution failed: {e}.")
 
-    # Method 3: Instruction banner if tools are missing
-    print(f"\n[X] Could not automatically download Google Drive folder '{remote_path}'.")
-    print(f"    Folder URL: https://drive.google.com/drive/folders/{folder_id}")
-    print(f"    Please install rclone or gdown to enable automated Google Drive sync:")
-    print(f"      pip install gdown")
-    print(f"      gdown --folder https://drive.google.com/drive/folders/{folder_id} -O {dest}")
     return dest
 
 
@@ -270,6 +364,7 @@ def setup_all_models(
     components: Optional[list[str]] = None,
     hf_token: Optional[str] = None,
     gdrive_folder_id: str = DEFAULT_GDRIVE_FOLDER_ID,
+    rclone_remote: str = DEFAULT_RCLONE_REMOTE,
 ) -> dict[str, Path]:
     """Download all required models and components for full offline SAAGA operation.
 
@@ -278,6 +373,7 @@ def setup_all_models(
         components: List of components to download
         hf_token: HuggingFace access token
         gdrive_folder_id: Google Drive public folder ID
+        rclone_remote: Name of the configured rclone remote (default 'gdrive')
 
     Returns:
         Dictionary mapping component names to local paths
@@ -297,7 +393,10 @@ def setup_all_models(
                 downloaded = download_from_gdrive(
                     remote_path=info["remote_path"],
                     target_dir=dest,
+                    component_name=name,
+                    size_str=info.get("size_str", "unknown size"),
                     folder_id=gdrive_folder_id,
+                    remote_name=rclone_remote,
                 )
                 results[name] = downloaded
             except Exception as exc:
@@ -325,6 +424,14 @@ def setup_all_models(
 def download_dataset(
     target_dir: str | Path = "data",
     folder_id: str = DEFAULT_GDRIVE_FOLDER_ID,
+    rclone_remote: str = DEFAULT_RCLONE_REMOTE,
 ) -> Path:
     """Download the complete benchmark datasets from Google Drive."""
-    return download_from_gdrive(remote_path="data", target_dir=target_dir, folder_id=folder_id)
+    return download_from_gdrive(
+        remote_path="data",
+        target_dir=target_dir,
+        component_name="Benchmark Datasets",
+        size_str=GDRIVE_COMPONENTS["data"]["size_str"],
+        folder_id=folder_id,
+        remote_name=rclone_remote,
+    )

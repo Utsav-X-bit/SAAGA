@@ -284,6 +284,7 @@ def bench_command(
 @click.option("--components", "-c", default=None, help="Comma-separated components to download (e.g. 'access-code-predictor,judge,translation').")
 @click.option("--hf-token", default=None, help="HuggingFace access token.")
 @click.option("--gdrive-folder-id", default=DEFAULT_GDRIVE_FOLDER_ID, help="Google Drive public folder ID for trained assets.")
+@click.option("--rclone-remote", default="gdrive", help="Configured rclone remote name (default 'gdrive').")
 @click.option("--list-available", "-l", is_flag=True, help="List all available downloadable components.")
 def download_models_command(
     component: Optional[str],
@@ -291,6 +292,7 @@ def download_models_command(
     components: Optional[str],
     hf_token: Optional[str],
     gdrive_folder_id: str,
+    rclone_remote: str,
     list_available: bool,
 ):
     """Download trained models, tokenizers, and weights from HuggingFace Hub or Google Drive.
@@ -307,17 +309,20 @@ def download_models_command(
     """
     if list_available:
         click.echo("Available SAAGA model components:")
-        click.echo("\n--- Google Drive Trained Assets ---")
+        click.echo(f"\n--- Google Drive Trained Assets (Remote: '{rclone_remote}:', Public Folder: {gdrive_folder_id}) ---")
         for name, info in GDRIVE_COMPONENTS.items():
-            click.echo(f"  - {name:22s}: {info['remote_path']} ({info['description']})")
+            sz = info.get("size_str", "")
+            click.echo(f"  - {name:22s} [{sz:8s}]: {info['remote_path']} ({info['description']})")
         click.echo("\n--- HuggingFace Hub Models ---")
         for name, info in DEFAULT_MODELS.items():
-            click.echo(f"  - {name:22s}: {info['repo_id']} ({info['description']})")
+            sz = info.get("size_str", "")
+            click.echo(f"  - {name:22s} [{sz:8s}]: {info['repo_id']} ({info['description']})")
         click.echo("\nAliases:")
         click.echo("  - ac-predictor         : Alias for access-code-predictor")
         click.echo("  - tl-mutator           : Alias for translation (facebook/nllb-200-distilled-600M)")
         click.echo("  - base-lora            : Alias for base model (Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2)")
         click.echo("  - victim               : Alias for victim model (meta-llama/Meta-Llama-3-8B-Instruct)")
+        click.echo(f"\nNote: Downloading Google Drive components requires rclone configured with remote '{rclone_remote}:' or gdown.")
         return
 
     active_components = []
@@ -334,6 +339,7 @@ def download_models_command(
         components=active_components,
         hf_token=hf_token,
         gdrive_folder_id=gdrive_folder_id,
+        rclone_remote=rclone_remote,
     )
     click.echo(f"[✓] Download completed. {len(results)} components ready.")
 
@@ -341,12 +347,12 @@ def download_models_command(
 @cli.command("download-data")
 @click.option("--target-dir", "-t", default="data", help="Directory where datasets will be installed.")
 @click.option("--gdrive-folder-id", default=DEFAULT_GDRIVE_FOLDER_ID, help="Google Drive public folder ID.")
-def download_data_command(target_dir: str, gdrive_folder_id: str):
-    """Download full benchmark datasets and TensorTrust splits from Google Drive."""
-    click.echo(f"[*] Syncing benchmark datasets to '{target_dir}' from Google Drive ({gdrive_folder_id})...")
-    res = download_dataset(target_dir=target_dir, folder_id=gdrive_folder_id)
+@click.option("--rclone-remote", default="gdrive", help="Configured rclone remote name (default 'gdrive').")
+def download_data_command(target_dir: str, gdrive_folder_id: str, rclone_remote: str):
+    """Download full benchmark datasets and TensorTrust splits from Google Drive (~3.0 GB)."""
+    click.echo(f"[*] Syncing benchmark datasets (~3.0 GB) to '{target_dir}' from Google Drive (remote: '{rclone_remote}:', folder: {gdrive_folder_id})...")
+    res = download_dataset(target_dir=target_dir, folder_id=gdrive_folder_id, rclone_remote=rclone_remote)
     click.echo(f"[✓] Datasets ready in: {res}")
-
 @cli.command("serve")
 @click.option("--host", default="127.0.0.1", help="Host interface to bind server.")
 @click.option("--port", default=8000, type=int, help="Port to bind server.")
