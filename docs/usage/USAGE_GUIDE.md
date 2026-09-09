@@ -12,10 +12,13 @@
    - [2.1 Base Installation & Optional Feature Flags](#21-base-installation--optional-feature-flags)
    - [2.2 Hardware Profiles & Compute Requirements](#22-hardware-profiles--compute-requirements)
    - [2.3 Air-Gapped / Offline Execution Environment Variables](#23-air-gapped--offline-execution-environment-variables)
-3. [Model Downloader & Offline Asset Management (`saaga download-models`)](#3-model-downloader--offline-asset-management-saaga-download-models)
+3. [Model & Data Cloud Downloader (`saaga download-models` & `saaga download-data`)](#3-model--data-cloud-downloader-saaga-download-models--saaga-download-data)
    - [3.1 Syntax and CLI Flags](#31-syntax-and-cli-flags)
-   - [3.2 Downloadable Components, Repositories, and Aliases](#32-downloadable-components-repositories-and-aliases)
-   - [3.3 Cache Directories, Checksum Verification, and Air-Gapping](#33-cache-directories-checksum-verification-and-air-gapping)
+   - [3.2 Component Catalog, Sizes, and Cloud Sources](#32-component-catalog-sizes-and-cloud-sources)
+   - [3.3 Storage Anatomy: Why Google Drive is 33.4 GB](#33-storage-anatomy-why-google-drive-is-334-gb)
+   - [3.4 Rclone Configuration & Google Drive Integration](#34-rclone-configuration--google-drive-integration)
+   - [3.5 Benchmark Datasets Sync (`saaga download-data`)](#35-benchmark-datasets-sync-saaga-download-data)
+   - [3.6 Cache Directories, Checksum Verification, and Air-Gapping](#36-cache-directories-checksum-verification-and-air-gapping)
 4. [Single Scenario Mode (`saaga run`)](#4-single-scenario-mode-saaga-run)
    - [4.1 Comprehensive Argument Matrix](#41-comprehensive-argument-matrix)
    - [4.2 Provider Execution Modes (vLLM, Ollama, Cloud APIs, Mock)](#42-provider-execution-modes-vllm-ollama-cloud-apis-mock)
@@ -175,66 +178,202 @@ export SAAGA_PROJECT_ROOT="$(pwd)"
 
 ---
 
-## 3. Model Downloader & Offline Asset Management (`saaga download-models`)
+## 3. Model & Data Cloud Downloader (`saaga download-models` & `saaga download-data`)
 
-Before executing SAAGA in an offline environment, all required base models, classifiers, LoRA adapters, and tokenizers must be pre-staged locally.
+Before executing SAAGA in an offline or air-gapped environment, all required base models, classifiers, LoRA adapters, access code predictors, and benchmark datasets must be pre-staged locally. SAAGA provides a multi-source cloud downloader supporting both **HuggingFace Hub** and **Google Drive** with automated `rclone` and `gdown` fallbacks.
 
 ### 3.1 Syntax and CLI Flags
 
 ```bash
+# Download model weights and LoRA adapters
 saaga download-models [COMPONENT] [OPTIONS]
+
+# Download full benchmark datasets and TensorTrust splits
+saaga download-data [OPTIONS]
 ```
 
-#### Options:
-- `COMPONENT` *(Optional)*: Positional name or alias of a specific model component (e.g., `tl-mutator`, `base-lora`, `victim`, `judge`, `embedding`).
+#### `saaga download-models` Options:
+- `COMPONENT` *(Optional)*: Positional name or alias of a specific model component (e.g., `access-code-predictor`, `generator-lora`, `planner-lora`, `tl-mutator`, `base-lora`, `victim`, `judge`, `embedding`).
 - `--target-dir`, `-t` *(str, default: `models`)*: Target directory on the local filesystem where model weights and configs are written.
-- `--components`, `-c` *(str, default: None)*: Comma-separated list of components to download in a single pass (e.g., `--components "embedding,judge,translation"`).
-- `--hf-token` *(str, default: None)*: Hugging Face User Access Token (can also be supplied via `HF_TOKEN` or `HUGGING_FACE_HUB_TOKEN` environment variables).
-- `--list-available`, `-l` *(flag)*: Displays all canonical components and registered aliases, then exits immediately.
+- `--components`, `-c` *(str, default: None)*: Comma-separated list of components to download in a single pass (e.g., `--components "access-code-predictor,judge,translation"`).
+- `--hf-token` *(str, default: None)*: Hugging Face User Access Token (or via `HF_TOKEN` / `HUGGING_FACE_HUB_TOKEN`).
+- `--gdrive-folder-id` *(str, default: `1BU6x9tzA9EPhMAIjaKlTAig85IZ3pSZY`)*: Public Google Drive folder ID hosting trained SAAGA weights.
+- `--rclone-remote` *(str, default: `gdrive`)*: Name of the configured rclone remote pointing to Google Drive.
+- `--list-available`, `-l` *(flag)*: Displays all canonical components, registered aliases, download sizes, and sources, then exits immediately.
 
-### 3.2 Downloadable Components, Repositories, and Aliases
+#### `saaga download-data` Options:
+- `--target-dir`, `-t` *(str, default: `data`)*: Local directory where benchmark datasets and SQLite stores will be synchronized.
+- `--gdrive-folder-id` *(str, default: `1BU6x9tzA9EPhMAIjaKlTAig85IZ3pSZY`)*: Public Google Drive folder ID.
+- `--rclone-remote` *(str, default: `gdrive`)*: Configured rclone remote name.
 
-| Canonical Key | Default HuggingFace Repository | Registered Aliases | Type | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `victim` | `meta-llama/Meta-Llama-3-8B-Instruct` | `llama3`, `llama-3` | Causal LM | Default target victim model evaluated against prompt injection. |
-| `base_lora` | `Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2` | `base-lora`, `base-model`, `base_model`, `lexi` | Causal LM | Shared base model hosting Planner and Generator LoRA adapters. |
-| `judge` | `distilbert/distilbert-base-uncased` | `pi_reward_model` | Sequence Classifier | DistilBERT binary stop-point classifier (`ATTACK` vs `ATTEMPT`). |
-| `embedding` | `sentence-transformers/all-MiniLM-L6-v2` | `rag` | Dense Embedding | 384-dimensional sentence embedding model for RAG defense retrieval. |
-| `translation` | `facebook/nllb-200-distilled-600M` | `tl-mutator`, `tl_mutator`, `tl`, `nllb` | Seq2Seq LM | Distilled multilingual translation model powering cross-lingual fallback mutations. |
+---
 
-#### CLI Download Examples:
+### 3.2 Component Catalog, Sizes, and Cloud Sources
 
-```bash
-# 1. List all available models and aliases
-saaga download-models --list-available
+SAAGA partitions downloadable assets into **Google Drive Trained Assets** (proprietary fine-tuned checkpoints, LoRA adapters, and dataset splits) and **HuggingFace Hub Models** (public open-weights base architectures):
 
-# 2. Download the translation fallback model into the default 'models/' folder
-saaga download-models tl-mutator
+| Component Key | Download Size | Storage Source | Target Local Path | Description |
+| :--- | :---: | :---: | :--- | :--- |
+| **`access-code-predictor`** | **1.75 GB** | Google Drive | `experiment/access_code_predictor/` | DistilBERT secret shape classifier (`TOKEN`, `WORD`, `PHRASE`, `SENTENCE`, `MULTILINE`). |
+| **`ranker`** | **3.65 GB** | Google Drive | `models/ranker_deberta_v1/` | DeBERTa-v3 cross-encoder scoring extracted access code candidates. |
+| **`defense-classifier`** | **3.65 GB** | Google Drive | `models/defense_classifier/` | DistilBERT defense categorization model (roleplay, leak, etc.). |
+| **`pi-reward-model`** | **256 MB** | Google Drive | `pre_trained/pi_reward_model/` | Stop Judge binary classifier predicting attempt break vs. continued attack. |
+| **`generator-lora`** | **5.3 GB** | Google Drive | `experiment/results/generator_sft_v2/` | Wording model LoRA adapter weaving XML plans into stealth prompts. |
+| **`planner-lora`** | **2.3 GB** | Google Drive | `experiment/results/planner_sft_v2_contract_anchor/` | Policy model LoRA adapter strictly adhering to strategy contracts. |
+| **`planner-repair-lora`**| **1.3 GB** | Google Drive | `experiment/results/planner_sft_v2_contract_repair/`| Policy model LoRA adapter trained on contract auto-repair. |
+| **`qlo-lora`** | **5.3 GB** | Google Drive | `experiment/results/qlo_curriculum_v1/` | QLO curriculum trained LoRA adapter. |
+| **`data`** | **3.0 GB** | Google Drive | `data/` | 83 benchmark datasets, SQLite databases (`saaga_kb.db`), and TensorTrust subsets. |
+| **`victim`** | **~16 GB** | HuggingFace | `models/victim/` | `meta-llama/Meta-Llama-3-8B-Instruct` target victim model. |
+| **`base_lora`** | **~16 GB** | HuggingFace | `models/base_lora/` | `Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2` uncensored base model. |
+| **`judge`** | **~260 MB**| HuggingFace | `models/judge/` | `distilbert/distilbert-base-uncased` base classifier. |
+| **`embedding`** | **~90 MB** | HuggingFace | `models/embedding/` | `sentence-transformers/all-MiniLM-L6-v2` dense embedding model for RAG. |
+| **`translation`** | **~2.4 GB**| HuggingFace | `models/translation/` | `facebook/nllb-200-distilled-600M` offline seq2seq translation model. |
 
-# 3. Download the uncensored base LoRA model to a custom path using an authentication token
-saaga download-models base-lora -t /shared/weights/base-lora --hf-token "hf_YourSecretToken"
+---
 
-# 4. Download multiple lightweight auxiliary models concurrently
-saaga download-models -c "embedding,judge,translation" -t models/auxiliary
+### 3.3 Storage Anatomy: Why Google Drive is 33.4 GB
+
+A complete query of the public Google Drive folder (`1BU6x9tzA9EPhMAIjaKlTAig85IZ3pSZY`) reports **33.409 GiB across 177 objects**.
+
+Understanding the breakdown between **training artifacts** and **inference artifacts** is critical for users who only want to run evaluations without downloading unnecessary data:
+
+```
+Google Drive Storage (33.4 GB Total)
+├── .pt (Training Optimizer States & Schedulers)  : 18.25 GB (54.6%)
+├── .safetensors (Model & LoRA Adapter Weights)    : 11.75 GB (35.2%)
+├── .jsonl & .db (Benchmark Datasets & SQLite)    :  2.96 GB  (8.9%)
+└── .bin & others (DistilBERT Weights & Metadata) :  0.45 GB  (1.3%)
 ```
 
-### 3.3 Cache Directories, Checksum Verification, and Air-Gapping
+#### Why are optimizer files (`optimizer.pt`) so massive?
+1. **Adam Momentum Tracking**: During SFT and QLO training, PyTorch's Adam optimizer stores first-order momentum ($m_t$) and second-order variance ($v_t$) for every trainable parameter. For 32-bit floating-point states, the optimizer state is **$2\times$ the size of the model weights themselves**.
+2. **Multiple Training Checkpoints**:
+   - `models/ranker_deberta_v1/`: Includes `checkpoint-2432/optimizer.pt` (1.37 GB) and `checkpoint-3040/optimizer.pt` (1.37 GB) = **2.74 GB**.
+   - `experiment/results/generator_sft_v2/`: Includes 3 step checkpoints with optimizer states (1.25 GB each) = **3.75 GB**.
+   - `experiment/results/qlo_curriculum_v1/`: Includes 3 step checkpoints with optimizer states (1.25 GB each) = **3.75 GB**.
+   - `experiment/results/planner_sft_v2_*/`: Includes 8 checkpoints with optimizer states (640 MB each) = **~5.1 GB**.
+   - `models/defense_classifier/`: Includes 3 checkpoints with optimizer states (511 MB each) = **~1.5 GB**.
+   - `experiment/access_code_predictor/`: Includes 3 checkpoints with optimizer states (511 MB each) = **~1.5 GB**.
+3. **Inference vs. Training Requirements**:
+   - **For Running Inference / Benchmarks**: You **DO NOT** need the `.pt` optimizer files! You only need the final `model.safetensors` and `adapter_model.safetensors` files, plus datasets, which totals **only ~4-5 GB**.
+   - **For Resuming Fine-Tuning**: If you plan to continue training checkpoints via SLURM scripts (`hpc/train_*.sh`), the optimizer states are preserved in the Drive folder so training resumes with identical gradient momentum.
 
-By default, if `--target-dir` is provided, `saaga download-models` snapshots the HuggingFace repository directly into the specified folder using `snapshot_download(..., local_dir=target_dir)`.
+---
 
-To verify model directory integrity before air-gapped deployment, ensure standard HuggingFace config and weight structures are present:
+### 3.4 Rclone Configuration & Google Drive Integration
+
+When downloading Google Drive assets via `saaga download-models` or `saaga download-data`, SAAGA automatically checks if `rclone` is installed and whether the remote is configured.
+
+If `rclone` or the remote is not found, SAAGA displays an actionable guidance notice in your terminal.
+
+#### Step 1: Install rclone
+```bash
+# Ubuntu / Debian / macOS (with root):
+curl https://rclone.org/install.sh | sudo bash
+
+# User-local installation on HPC compute clusters (without root):
+curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+unzip rclone-current-linux-amd64.zip
+mkdir -p ~/.local/bin
+cp rclone-*-linux-amd64/rclone ~/.local/bin/
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+#### Step 2: Configure the `gdrive` Remote in rclone
+Run the interactive config utility:
+```bash
+rclone config
+```
+Follow the prompts:
+1. Enter `n` to create a new remote.
+2. Enter name: `gdrive` *(or any custom name; specify `--rclone-remote <name>` if different)*.
+3. Type of storage: enter `drive` (Google Drive).
+4. Leave `client_id` and `client_secret` blank (press Enter).
+5. Scope: enter `2` (Read-only access: `drive.readonly`).
+6. Root folder ID: press Enter (or supply `1BU6x9tzA9EPhMAIjaKlTAig85IZ3pSZY`).
+7. Advanced config: enter `n`.
+8. Auto-config: enter `y` if on desktop with browser, or `n` to authenticate headlessly on HPC.
+9. Keep as Team Drive: `n`.
+10. Confirm and save: enter `y`, then `q` to quit.
+
+#### Step 3: Run Downloads via SAAGA CLI
+```bash
+# Download access code predictor model (1.75 GB)
+saaga download-models access-code-predictor
+
+# Download Generator LoRA adapter
+saaga download-models generator-lora
+
+# Download Planner LoRA adapter
+saaga download-models planner-lora
+
+# Download multiple trained components
+saaga download-models -c "access-code-predictor,ranker,defense-classifier"
+
+# Download using a custom rclone remote name
+saaga download-models access-code-predictor --rclone-remote my_drive_remote
+```
+
+#### Alternative: Headless Download via `gdown`
+If you cannot install or configure `rclone`, install `gdown` and download directly from the public Google Drive folder without authentication:
+```bash
+pip install gdown
+
+# Download access code predictor
+gdown --folder https://drive.google.com/drive/folders/1BU6x9tzA9EPhMAIjaKlTAig85IZ3pSZY -O experiment/access_code_predictor
+```
+
+---
+
+### 3.5 Benchmark Datasets Sync (`saaga download-data`)
+
+All 83 benchmark datasets, SQLite databases (`saaga_kb.db`), and TensorTrust splits (~3.0 GB total) can be synchronized to the `data/` directory with a single command:
 
 ```bash
+saaga download-data --target-dir data/
+```
+
+This populates:
+- `data/TensorTrust_subsets/` (subsets 1 through 9)
+- `data/access_code_classifier_dataset_part_*` (parts aa, ab, ac, ad)
+- `data/defense_classifier_dataset-Part*.jsonl`
+- `data/saaga_kb.db` & `data/autored_kb.db` (Strategy knowledge base)
+- `data/attack_transition_dataset.jsonl` & benchmark evaluation splits
+
+---
+
+### 3.6 Cache Directories, Checksum Verification, and Air-Gapping
+
+By default, `saaga download-models` places HuggingFace repositories directly into `--target-dir` (default: `models/`) and Google Drive components into their production directories (`experiment/access_code_predictor/`, `models/ranker_deberta_v1/`, etc.).
+
+To verify directory integrity before air-gapped deployment, ensure standard config and weight structures are present:
+
+```bash
+# Access Code Predictor
+ls -la experiment/access_code_predictor/
+# Expected:
+# - config.json
+# - model.safetensors (256 MB)
+# - tokenizer.json
+# - vocab.txt
+
+# DeBERTa Ranker
+ls -la models/ranker_deberta_v1/
+# Expected:
+# - config.json
+# - model.safetensors (704 MB)
+# - tokenizer.json
+# - spm.model
+
+# Translation Mutator (HuggingFace)
 ls -la models/translation/
-# Expected artifacts:
+# Expected:
 # - config.json
 # - generation_config.json
 # - sentencepiece.bpe.model
 # - tokenizer_config.json
-# - tokenizer.json
 # - model.safetensors (or pytorch_model.bin)
 ```
-
 ---
 
 ## 4. Single Scenario Mode (`saaga run`)
