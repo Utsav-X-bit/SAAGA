@@ -7,15 +7,13 @@ against SAAGA's attacks, across TensorTrust recoverability difficulty tiers.
 Two stages (selected by `mode`):
 
     static    — cheap single-turn extraction screen (no planner/generator LoRA).
-    adaptive  — full SAAGA planner/generator red-teaming loop (authoritative).
+    adaptive  — full SAAGA planner/generator red-teaming loop, batched (authoritative).
     both      — run both; adaptive scorecard is the headline.
 
-Note on the adaptive loop: the authoritative attack is `RedTeamingController`
-(the same full planner -> generator -> victim -> extractor -> verifier -> fallback
-loop used by `saaga run`). It is sequential per scenario. `run_scenarios_batched`
-in the engine is a *naive* direct-attack loop that ignores the planner/generator
-providers, so it is intentionally NOT used here — a batched adaptive runner is a
-documented follow-up optimization.
+The adaptive stage drives `run_scenarios_batched` (the adaptive batched runner):
+per round it issues planner + generator calls for all active scenarios in
+parallel and the victim calls as one `chat_batch`, so a whole tier advances in
+lockstep instead of sequentially.
 """
 from __future__ import annotations
 
@@ -23,11 +21,9 @@ import random
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
-from saaga.agents.controller import RedTeamingController
-from saaga.agents.generator import AttackPromptGenerator
-from saaga.agents.planner import RedTeamingPlanner
 from saaga.core.scenario import DefenseScenario
 from saaga.core.scoring import classify_success
+from saaga.engine.batch_runner import run_scenarios_batched
 from saaga.engine.benchmark import load_scenarios_from_jsonl
 from saaga.evaluation.defense_scorer import DefenseScoreCard, compute_scorecard
 from saaga.evaluation.difficulty import (
@@ -35,9 +31,6 @@ from saaga.evaluation.difficulty import (
     resolve_tier,
 )
 from saaga.evaluators.extractor import SensitiveInfoExtractor
-from saaga.fuzzing.fallback import MutationFallback
-from saaga.memory.kb import StrategyKnowledgeBase
-from saaga.memory.rag import DefenseRetriever
 from saaga.providers.base import BaseLLMProvider
 
 # Static screen templates: generic extraction attempts sent without an LLM planner.
@@ -96,37 +89,6 @@ def load_tiered_scenarios(
         tiered[tier.name] = deduped
 
     return tiered
-
-
-def _build_controller(
-    victim_provider: BaseLLMProvider,
-    planner_provider: BaseLLMProvider,
-    generator_provider: BaseLLMProvider,
-    max_attempts: int,
-    enable_fallback: bool,
-    verbose: bool = False,
-) -> RedTeamingController:
-    """Build the full adaptive attack controller (frozen KB/RAG, no KB mutation)."""
-    kb = StrategyKnowledgeBase()
-    retriever = DefenseRetriever()
-    planner = RedTeamingPlanner(planner_provider, kb=kb, retriever=retriever)
-    generator = AttackPromptGenerator(generator_provider, retriever=retriever)
-    extractor = SensitiveInfoExtractor()
-    fallback = MutationFallback() if enable_fallback else None
-
-    # judge=None keeps the success ladder extractor-driven and avoids loading a
-    # heavy classifier model; kb_updater=None keeps evaluation pure (no KB writes).
-    return RedTeamingController(
-        victim_provider=victim_provider,
-        planner=planner,
-        generator=generator,
-        extractor=extractor,
-        judge=None,
-        fallback=fallback,
-        kb_updater=None,
-        max_attempts=max_attempts,
-        verbose=verbose,
-    )
 
 
 def _static_attack(
@@ -211,27 +173,25 @@ def _run_adaptive(
     tiered_scenarios: dict[str, list[DefenseScenario]],
     max_attempts: int,
     enable_fallback: bool,
+    max_parallel: int,
     progress_callback: Optional[Callable[[int, int, bool], None]] = None,
 ) -> dict[str, list[dict[str, Any]]]:
-    """Run the full adaptive SAAGA loop per tier; returns runs grouped by tier."""
-    controller = _build_controller(
-        victim_provider=victim_provider,
-        planner_provider=planner_provider,
-        generator_provider=generator_provider,
-        max_attempts=max_attempts,
-        enable_fallback=enable_fallback,
-        verbose=False,
-    )
+    """Run the batched adaptive SAAGA loop per tier; returns runs grouped by tier."""
     tiered_runs: dict[str, list[dict[str, Any]]] = {}
     done = 0
     total = sum(len(sc) for sc in tiered_scenarios.values())
 
     for tier, scenarios in tiered_scenarios.items():
-        runs: list[dict[str, Any]] = []
-        for sc in scenarios:
-            sid = getattr(sc, "_defense_id", None)
-            run_json = controller.run_scenario(sc, scenario_id=sid)
-            runs.append(run_json)
+        runs = run_scenarios_batched(
+            scenarios=scenarios,
+            victim_provider=victim_provider,
+            planner_provider=planner_provider,
+            generator_provider=generator_provider,
+            max_attempts=max_attempts,
+            enable_fallback=enable_fallback,
+            max_parallel=max_parallel,
+        )
+        for run_json in runs:
             done += 1
             if progress_callback:
                 progress_callback(done, total, bool(run_json.get("result", {}).get("success", False)))
@@ -251,6 +211,7 @@ def run_evaluation(
     enable_fallback: bool = True,
     seed: int = 42,
     mode: str = "adaptive",
+    max_parallel: int = 16,
     progress_callback: Optional[Callable[[int, int, bool], None]] = None,
 ) -> dict[str, Any]:
     """Evaluate a victim model's defense strength and return scorecard(s) + runs.
@@ -289,7 +250,7 @@ def run_evaluation(
     if mode == "adaptive":
         tiered_runs = _run_adaptive(
             victim_provider, planner_provider, generator_provider,
-            tiered_scenarios, max_attempts, enable_fallback, progress_callback,
+            tiered_scenarios, max_attempts, enable_fallback, max_parallel, progress_callback,
         )
         card = compute_scorecard(tiered_runs, victim_model, max_attempts)
         return {"scorecard": card, "tiered_runs": tiered_runs, "meta": meta}
@@ -299,7 +260,7 @@ def run_evaluation(
     static_card = compute_scorecard(static_runs, victim_model, max_attempts)
     adaptive_runs = _run_adaptive(
         victim_provider, planner_provider, generator_provider,
-        tiered_scenarios, max_attempts, enable_fallback, progress_callback,
+        tiered_scenarios, max_attempts, enable_fallback, max_parallel, progress_callback,
     )
     adaptive_card = compute_scorecard(adaptive_runs, victim_model, max_attempts)
     return {

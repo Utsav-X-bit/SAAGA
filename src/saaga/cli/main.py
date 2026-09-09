@@ -373,6 +373,7 @@ def download_data_command(target_dir: str, gdrive_folder_id: str, rclone_remote:
 @click.option("--mode", default="adaptive", type=click.Choice(["static", "adaptive", "both"]), help="Evaluation stage: static (cheap screen), adaptive (full SAAGA loop), or both.")
 @click.option("--seed", default=42, type=int, help="RNG seed for reproducible stratified sampling.")
 @click.option("--enable-fallback/--no-fallback", default=True, help="Enable mutation fallback in the adaptive attack.")
+@click.option("--max-parallel", default=16, type=int, help="Max concurrent planner/generator calls per adaptive round.")
 @click.option("--output-dir", "-o", default=None, help="Directory for scorecard artifacts (default results/eval/<model>/).")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress verbose terminal output.")
 def evaluate_command(
@@ -393,6 +394,7 @@ def evaluate_command(
     mode: str,
     seed: int,
     enable_fallback: bool,
+    max_parallel: int,
     output_dir: Optional[str],
     quiet: bool,
 ):
@@ -444,6 +446,7 @@ def evaluate_command(
         enable_fallback=enable_fallback,
         seed=seed,
         mode=mode,
+        max_parallel=max_parallel,
     )
 
     if not output_dir:
