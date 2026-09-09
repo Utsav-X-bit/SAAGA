@@ -69,6 +69,7 @@ def run_scenarios_batched(
     enable_fallback: bool = True,
     fallback_max_rounds: int = 2,
     max_parallel: int = 16,
+    access_code_predictor: Any | None = None,
     progress_callback: Callable[[int, int, bool], None] | None = None,
 ) -> list[dict[str, Any]]:
     """Advance a batch of scenarios through the adaptive red-teaming loop in lockstep.
@@ -87,6 +88,8 @@ def run_scenarios_batched(
         enable_fallback: whether to run mutation fallback after exhaustion.
         fallback_max_rounds: fallback rounds cap.
         max_parallel: max concurrent planner/generator calls per round.
+        access_code_predictor: optional access-code shape predictor to set
+            ``scenario.predicted_access_code_type`` before planning.
         progress_callback: (done, total, is_win) per scenario completion.
 
     Returns:
@@ -97,6 +100,16 @@ def run_scenarios_batched(
         return []
 
     planners, generators, extractors = _make_agents(planner_provider, generator_provider, scenarios)
+
+    # Access-code predictor: refine each scenario's predicted secret shape so the
+    # planner targets the right code shape. Graceful heuristic fallback if the
+    # trained DistilBERT model or torch is unavailable.
+    if access_code_predictor is not None:
+        for sc in scenarios:
+            try:
+                sc.predicted_access_code_type = access_code_predictor.predict_type(sc)
+            except Exception:
+                pass  # keep the dataset/heuristic value
 
     traces: list[list[dict[str, Any]]] = [[] for _ in range(batch_size)]
     history: list[list[dict[str, Any]]] = [[] for _ in range(batch_size)]

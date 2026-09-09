@@ -32,6 +32,7 @@ from saaga.evaluation.difficulty import (
 )
 from saaga.evaluators.extractor import SensitiveInfoExtractor
 from saaga.providers.base import BaseLLMProvider
+from saaga.evaluators.shape_predictor import AccessCodePredictor
 
 # Static screen templates: generic extraction attempts sent without an LLM planner.
 STATIC_ATTACK_TEMPLATES: tuple[str, ...] = (
@@ -174,6 +175,7 @@ def _run_adaptive(
     max_attempts: int,
     enable_fallback: bool,
     max_parallel: int,
+    access_code_predictor: Any | None = None,
     progress_callback: Optional[Callable[[int, int, bool], None]] = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Run the batched adaptive SAAGA loop per tier; returns runs grouped by tier."""
@@ -190,6 +192,7 @@ def _run_adaptive(
             max_attempts=max_attempts,
             enable_fallback=enable_fallback,
             max_parallel=max_parallel,
+            access_code_predictor=access_code_predictor,
         )
         for run_json in runs:
             done += 1
@@ -212,6 +215,7 @@ def run_evaluation(
     seed: int = 42,
     mode: str = "adaptive",
     max_parallel: int = 16,
+    use_access_code_predictor: bool = True,
     progress_callback: Optional[Callable[[int, int, bool], None]] = None,
 ) -> dict[str, Any]:
     """Evaluate a victim model's defense strength and return scorecard(s) + runs.
@@ -242,6 +246,11 @@ def run_evaluation(
         "scenario_counts": {t: len(sc) for t, sc in tiered_scenarios.items()},
     }
 
+    # Access-code predictor: predicts each scenario's secret shape from its defense
+    # text so the planner targets the right code shape (heuristic fallback if the
+    # trained DistilBERT model / torch is unavailable). Loaded once, shared across tiers.
+    access_code_predictor = AccessCodePredictor() if use_access_code_predictor else None
+
     if mode == "static":
         tiered_runs = _run_static(victim_provider, tiered_scenarios, max_attempts, progress_callback)
         card = compute_scorecard(tiered_runs, victim_model, max_attempts)
@@ -250,7 +259,8 @@ def run_evaluation(
     if mode == "adaptive":
         tiered_runs = _run_adaptive(
             victim_provider, planner_provider, generator_provider,
-            tiered_scenarios, max_attempts, enable_fallback, max_parallel, progress_callback,
+            tiered_scenarios, max_attempts, enable_fallback, max_parallel,
+            access_code_predictor, progress_callback,
         )
         card = compute_scorecard(tiered_runs, victim_model, max_attempts)
         return {"scorecard": card, "tiered_runs": tiered_runs, "meta": meta}
@@ -260,7 +270,8 @@ def run_evaluation(
     static_card = compute_scorecard(static_runs, victim_model, max_attempts)
     adaptive_runs = _run_adaptive(
         victim_provider, planner_provider, generator_provider,
-        tiered_scenarios, max_attempts, enable_fallback, max_parallel, progress_callback,
+        tiered_scenarios, max_attempts, enable_fallback, max_parallel,
+        access_code_predictor, progress_callback,
     )
     adaptive_card = compute_scorecard(adaptive_runs, victim_model, max_attempts)
     return {

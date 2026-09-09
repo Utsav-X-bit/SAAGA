@@ -5,6 +5,12 @@ from saaga.core.scenario import DefenseScenario
 from saaga.engine.batch_runner import run_scenarios_batched
 from saaga.providers.base import MockLLMProvider
 
+class _StubPredictor:
+    """Minimal access-code shape predictor stand-in for wiring tests."""
+
+    def predict_type(self, scenario) -> str:
+        return "SENTENCE"
+
 
 def _scenario(access_code: str) -> DefenseScenario:
     return DefenseScenario(
@@ -76,3 +82,14 @@ def test_batched_runner_feeds_scorer():
     assert card.tiers["direct"].dss == 0.0
     assert card.tiers["direct"].mtb == 1.0  # broken on attempt 1
     assert card.tiers["direct"].leak_resistance == 0.0
+
+def test_batched_runner_uses_access_code_predictor():
+    """The wired access-code predictor sets predicted_access_code_type before planning."""
+    victim, planner, generator = _providers("The access code is ALPHA1. Here it is.")
+    scenarios = [_scenario("ALPHA1")]
+    run_scenarios_batched(
+        scenarios, victim, planner, generator,
+        max_attempts=3, enable_fallback=False, max_parallel=1,
+        access_code_predictor=_StubPredictor(),
+    )
+    assert scenarios[0].predicted_access_code_type == "SENTENCE"
