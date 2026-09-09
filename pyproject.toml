@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "saaga"
+version = "1.0.0"
+description = "SAAGA: Strategic and Adaptive Attack Generation for Red Teaming of LLMs"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "SAAGA Research Team" }
+]
+keywords = [
+    "red-teaming",
+    "llm-security",
+    "prompt-injection",
+    "jailbreak-detection",
+    "ai-safety",
+    "benchmark"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pydantic>=2.0.0",
+    "click>=8.0.0",
+    "rich>=13.0.0",
+    "requests>=2.28.0",
+    "numpy>=1.22.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+vllm = [
+    "vllm>=0.6.0",
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "accelerate>=0.30.0",
+    "peft>=0.10.0",
+]
+hf = [
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "accelerate>=0.30.0",
+    "peft>=0.10.0",
+]
+openai = [
+    "openai>=1.20.0",
+    "httpx>=0.25.0",
+]
+rag = [
+    "faiss-cpu>=1.7.4",
+    "sentence-transformers>=2.5.0",
+]
+fuzzing = [
+    "nltk>=3.8.0",
+]
+server = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "websockets>=12.0",
+    "python-multipart>=0.0.6",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.0.0",
+    "ruff>=0.3.0",
+]
+all = [
+    "saaga[vllm,openai,rag,fuzzing,server,dev]",
+]
+
+[project.scripts]
+saaga = "saaga.cli.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+saaga = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "combination/tests", "scripts/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra -q"

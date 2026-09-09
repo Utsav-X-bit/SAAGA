@@ -1,0 +1,132 @@
+# =============================================================================
+# SAAGA (.gitignore)
+# =============================================================================
+
+# --- Python & Bytecode ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Virtual Environments (Installable via pyproject.toml / uv / pip) ---
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Node.js & Frontend (Setupable via ui/package.json & npm install) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+ui/dist/
+ui/build/
+ui/.next/
+ui/out/
+
+# --- Model Weights, Checkpoints & Optimizers (Downloadable via `saaga download-models`) ---
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+**/checkpoint-*/
+models/
+pre_trained/
+trainer_state.json
+training_args.bin
+optimizer.pt
+scheduler.pt
+rng_state*.pth
+
+# --- Local Experiment Checkpoints & Results ---
+experiment/access_code_predictor/checkpoint-*/
+experiment/access_code_predictor/*.safetensors
+experiment/access_code_predictor/*.pt
+experiment/access_code_predictor/*.bin
+experiment/results/
+
+# --- Large Datasets, Databases & Indices (Buildable via scripts/dataset_tools) ---
+*--largeFile.jsonl
+*.db
+JailGuard/dataset/image/
+JailGuard/dataset/text/
+*.sqlite
+*.sqlite3
+*.index
+*.faiss
+data/*.jsonl
+data/access_code_classifier_dataset_part_*
+data/raw_dump_defenses.jsonl.bz2
+data/TensorTrust_subsets/*.jsonl
+data/rag/
+scripts/training/sft_data/*.jsonl
+
+# --- Run Artifacts, Logs & Benchmarks ---
+results/
+results_*/
+logs/
+*.log
+rsync-errors.log
+
+# --- LaTeX Build Artifacts ---
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+paper/tex/*.log
+paper/tex/*.aux
+
+# --- Testing & Coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# --- IDEs & Local Editors ---
+.vscode/
+.idea/
+.history/
+*.swp
+*.swo
+*~
+
+# --- Agent & Session Metadata ---
+.superpowers/
+.claude/
+.gemini/
+.pi/
+
+# --- Legacy Archive & Tool Outputs ---
+AutoRed-Final/
+graphify-out/
+
+# --- OS & Environment ---
+.DS_Store
+Thumbs.db
+.env
+.env.*

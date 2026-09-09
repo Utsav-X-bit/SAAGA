@@ -1,0 +1,60 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{cite}
+\IfFileExists{pdftexcmds.sty}{\usepackage[hidelinks]{hyperref}}{} % hyperref only if deps present
+\IfFileExists{url.sty}{\usepackage{url}}{}
+
+\begin{document}
+
+\title{SAAGA: Strategic and Adaptive Attack Generation for Red Teaming of LLM}
+
+\author{\IEEEauthorblockN{Author One, Author Two, and Author Three}
+\IEEEauthorblockA{Affiliation\\
+\textit{To be completed before submission}}}
+
+\maketitle
+
+\begin{abstract}
+Automated red teaming of large language models reports attack success rates that are hard to verify, compare, or explain. A reported success rests on a classifier's opinion, a failed attack cannot be told apart from a bad idea or a bad sentence, and every run forgets what it learned before. SAAGA, a red-teaming framework built on the AutoRed scenario suite, addresses these three problems. In each scenario, a hidden access code sits between two instruction blocks, the sandwich defense. A planner chooses the attack strategy as a structured plan; a generator turns the plan into a 40-word prompt. Success is decided by four judge-independent signals; the strongest wins are confirmed by re-verification, where the victim must accept a re-sent candidate. Planning uses a table of past success rates and a store of past winning attacks, rebuilt after every benchmark, and a privileged oracle with a larger search budget supplies the training data. On 13,024 scenarios against four open-weight victims, SAAGA breaks 87.8\% to 97.0\% of defenses (95\% confidence-interval width at most 0.6 points), with a median of one to two attempts; 60.7\% to 79.1\% of wins are confirmed by the victim itself. Against the original AutoRed loop on 1,000-scenario samples (51.0\% to 75.3\% break across five victims), SAAGA breaks 88.0\% to 97.1\% of defenses on 22,791 to 26,047 scenarios, and the memory loop cuts attempts on success by 10\%. We assign every failure to a pipeline phase, which locates the main remaining weakness in the stop-point judge.
+\end{abstract}
+
+\begin{IEEEkeywords}
+automated red teaming, prompt injection defenses, LLM evaluation, jailbreak robustness, self-improving systems, benchmarking.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Prompt defenses are supposed to stop an LLM from revealing its instructions, its secrets, or its system context. Automated red teaming is how we measure whether they do. Today's measurements share a weakness: the win signal is a classifier's opinion. In most benchmarks, a classifier calls a response a success because it looks harmful, and the evaluation inherits every error that judge makes~\cite{zheng2023, wang2023}. When the judge is wrong, the benchmark is wrong, and no downstream analysis can repair it.
+
+Three gaps keep red-teaming evaluations from being verifiable, diagnosable, and reusable. Recent work also argues that conclusions based on attack success rate (ASR) comparisons are often not supported by the evidence those comparisons provide~\cite{cooper2025}. First, success is decided by an external judge, not by the defended system's own behavior, so the evaluation has no ground truth to point to. Second, most automated attackers are a single model that both chooses the tactic and phrases the prompt. When such an attack fails, there are two possible explanations, the idea was wrong or the words were wrong, and the benchmark cannot tell which. Third, evaluations forget. Each run starts from scratch, and the system never benefits from the thousands of scenarios it has already attacked.
+
+SAAGA treats red teaming as a capture-the-flag game with a win that can be verified. In each scenario, a hidden access code sits between two blocks of instruction text, the sandwich defense. This matches how defenses are deployed in practice: the attacker's prompt lands inside a system message that restates its rules above and below the prompt~\cite{greshake2023, wallace2024hierarchy}. Winning means making the victim reveal or accept the code. That is a yes-or-no event the benchmark can check directly, without a judge's opinion.
+
+The design follows from three decisions. SAAGA separates policy from wording: a planner chooses the attack strategy as a structured plan, and a generator turns that plan into a short prompt. The split makes failures explainable, because a bad strategy and a badly worded prompt leave different traces. SAAGA lets the victim make the final call: the strongest win is a candidate that the victim itself accepts when we send it again inside the same defense. SAAGA makes the system remember: a table of past success rates and a store of past winning attacks inform every plan, and we rebuild both after every benchmark. A privileged oracle, which attacks scenarios with a larger search budget, produces the training data for the planner and the generator. This closes the loop.
+
+Our contributions are:
+\begin{enumerate}
+\item A verifiable evaluation protocol. The sandwich scenario defines a yes-or-no win condition. Success is decided by four signals that do not depend on a judge, in a fixed order of priority, and the top signal requires the victim to accept the candidate when it is sent again (Sec.~\ref{sec:form}, Sec.~\ref{sec:measure}). No classifier's opinion enters the success decision.
+\item A diagnostic planner--generator architecture. A structured plan carries the strategy decision to the wording stage, deterministic guards enforce anti-repeat policies, and every failed scenario receives a phase-level failure label. The original AutoRed loop breaks 51.0\% to 75.3\% of defenses on 1,000-scenario samples, while SAAGA breaks 88.0\% to 97.1\% on 22,791 to 26,047 scenarios across four victims (Sec.~\ref{sec:archres}, Table~\ref{tab:arch}).
+\item A self-improving memory loop. The strategy table and retrieval store inform planning, with explicit controls against overfitting, and a privileged oracle supplies the training data. In a controlled comparison of 1,000 runs, memory cuts the average attempts on success from 4.02 to 3.61 and total victim queries by 8.4\%, with no significant change in break rate on that pool ($p=0.60$) (Sec.~\ref{sec:memory}, Table~\ref{tab:memory}).
+\item Large-scale evidence with full attribution. We evaluate four open-weight victims on 13,024 scenarios each (52,096 scenarios total), check stability at 26,047 scenarios, and assign every failure to a phase, defense family, and access code type (Sec.~\ref{sec:exp}).
+\end{enumerate}
+
+SAAGA breaks 87.8\% to 97.0\% of defenses across the four victims. The verified rate is 60.7\% to 79.1\%, and a typical break takes one to two attempts (mean 2.0 to 3.9). Mistral-7B breaks fastest (97.0\%, 2.0 attempts on average), and Llama-3-8B resists longest (87.8\%, 3.9 attempts). The remaining failures concentrate in translation, roleplay, and trigger-phrase defenses and in long secrets. The most common failure phase is the stop-point judge, which points to where the next version of the framework should invest.
+
+\section{Related Work}
+
+\subsection{Automated red-teaming attacks}
+Gradient-based methods such as GCG optimize a suffix against the victim's logit loss. They work well in white-box settings but transfer poorly to black-box use~\cite{zou2023}. Query-efficient methods replace the gradient with a language model. PAIR runs a two-agent loop in which one model generates attacks and another critiques them, reaching strong success in about twenty queries~\cite{chao2023}. Tree of Attacks~\cite{mehrotra2024} expands a tree of attacks and prunes unpromising branches. AutoDAN frames jailbreak discovery as genetic search over aligned prompts~\cite{liu2024autodan}. Persona and framing attacks, from the original DAN construction to many-shot jailbreaking, show that instruction framing alone can bypass refusals~\cite{shen2023, anil2024}. Multi-turn methods escalate compromise across a conversation, and red-teaming with language models has been studied since~\cite{ganguli2022}. SAAGA builds on AutoRed, which removes seed instructions entirely. AutoRed generates free-form adversarial prompts using persona guidance, a reflection loop, and an offline harmfulness verifier, and reports strong attack success on its own medium and hard behavior suites~\cite{diao2025}.
+
+These methods optimize attack quality against harmful behaviors, and an external classifier measures them. SAAGA complements them in two ways. First, its goal is to evaluate defenses, so the win condition is a concrete event inside the victim's own deployment format that we can check directly, not a label assigned afterward. Second, its attacker is a policy: the strategy decision is a structured object that can be inspected, which prior attack methods do not expose.
+
+\subsection{Evaluation frameworks and benchmarks}
+HarmBench standardized the evaluation of automated red teaming by fixing a behavior suite, a protocol, and metrics. It compares eighteen methods against thirty-three models under a GPT-4-based judge and finds that no method or defense is uniformly effective~\cite{mazeika2024}. Simple adaptive attacks show that fine-tuning on benign data revives zero-shot jailbreaks~\cite{andriushchenko2024}, and StrongREJECT provides a strong rejection classifier for checking whether a response is a genuine refusal~\cite{souly2024}. JailbreakBench opens an ecosystem of jailbreak attacks and defenses with a shared evaluation harness~\cite{chao2024jb}. NIST's CyberSecEval runs adversarial task batteries against commercial systems~\cite{nist2024}. Two recent evaluations extend the scope further. A USENIX Security 2025 benchmark pairs automatic jailbreak attacks with automatic defense evaluation for task-level vulnerabilities~\cite{zhang2025usenix}, and JailbreakRadar assesses jailbreaks with multiple attacks in one framework~\cite{chu2025}. All of these inherit a judge-dependence: the success label comes from a grader, and the grader's errors are unbounded. This is the same concern behind the argument that ASR comparisons often fail to support the conclusions drawn from them~\cite{cooper2025}.
+
+SAAGA differs in where the win signal comes from. The ground truth is the hidden access code and the victim's own acceptance behavior, so the benchmark's correctness does not depend on calibrating a classifier. This answers the ASR-validity critique directly, because our primary rates measure checkable events rather than grader labels. SAAGA also reports more: alongside break rates with confidence intervals, we report verified rates, attempts to success, extraction precision and recall, and a per-phase failure attribution for every scenario that was not broken.
+
+\subsection{Memory and self-improvement}
+Reflexion shows that an agent can improve by storing verbal self-critiques of its failures and reading them on the next trial~\cite{shinn2023}. Self-Refine iterates critique and revision within a single task~\cite{madaan2023}. Retrieval-augmented generation lets a model use retrieved documents at inference time~\cite{lewis2020}. These mechanisms improve a single agent. In red teaming, the useful memory is across scenarios: what worked against a similar defense. SAAGA's memory is deliberately non-parametric. We recompute the success-rate tables and the retrieval index over past wins after each benchmark, in a batch, and the planner's parameters stay frozen during evaluation. Two explicit controls limit overfitting to past winners: a five-attempt noise floor and a 5\% exploration blank. A controlled comparison shows that some overfitting does occur: the duplicate-attack rate rises from 0.77\% to 4.08\% when memory is enabled.

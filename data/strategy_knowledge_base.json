@@ -1,0 +1,1812 @@
+{
+  "by_model": {
+    "unknown": {
+      "password": {
+        "trigger_phrase_discovery": {
+          "success_rate": 77.94,
+          "total_attempts": 2856.0,
+          "successes": 2226.0,
+          "failures": 630.0
+        },
+        "instruction_leak": {
+          "success_rate": 77.96,
+          "total_attempts": 2817.0,
+          "successes": 2196.0,
+          "failures": 621.0
+        },
+        "exception_discovery": {
+          "success_rate": 58.71,
+          "total_attempts": 867.0,
+          "successes": 509.0,
+          "failures": 358.0
+        },
+        "roleplay": {
+          "success_rate": 58.64,
+          "total_attempts": 689.0,
+          "successes": 404.0,
+          "failures": 285.0
+        },
+        "translation": {
+          "success_rate": 65.56,
+          "total_attempts": 755.0,
+          "successes": 495.0,
+          "failures": 260.0
+        },
+        "summarization": {
+          "success_rate": 86.06,
+          "total_attempts": 2002.0,
+          "successes": 1723.0,
+          "failures": 279.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 84.25,
+          "total_attempts": 1378.0,
+          "successes": 1161.0,
+          "failures": 217.0
+        },
+        "unicode_bypass": {
+          "success_rate": 89.83,
+          "total_attempts": 59.0,
+          "successes": 53.0,
+          "failures": 6.0
+        },
+        "format_conversion": {
+          "success_rate": 87.5,
+          "total_attempts": 64.0,
+          "successes": 56.0,
+          "failures": 8.0
+        },
+        "json_smuggling": {
+          "success_rate": 82.09,
+          "total_attempts": 67.0,
+          "successes": 55.0,
+          "failures": 12.0
+        },
+        "reflection_attack": {
+          "success_rate": 92.04,
+          "total_attempts": 113.0,
+          "successes": 104.0,
+          "failures": 9.0
+        },
+        "latent_injection": {
+          "success_rate": 84.85,
+          "total_attempts": 66.0,
+          "successes": 56.0,
+          "failures": 10.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 90.57,
+          "total_attempts": 53.0,
+          "successes": 48.0,
+          "failures": 5.0
+        },
+        "authority_override": {
+          "success_rate": 93.22,
+          "total_attempts": 59.0,
+          "successes": 55.0,
+          "failures": 4.0
+        },
+        "encoding_bypass": {
+          "success_rate": 90.91,
+          "total_attempts": 55.0,
+          "successes": 50.0,
+          "failures": 5.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 88.0,
+          "total_attempts": 50.0,
+          "successes": 44.0,
+          "failures": 6.0
+        },
+        "base64_bypass": {
+          "success_rate": 88.68,
+          "total_attempts": 53.0,
+          "successes": 47.0,
+          "failures": 6.0
+        },
+        "jailbreak_framing": {
+          "success_rate": 78.72,
+          "total_attempts": 47.0,
+          "successes": 37.0,
+          "failures": 10.0
+        }
+      },
+      "conditional": {
+        "trigger_phrase_discovery": {
+          "success_rate": 79.65,
+          "total_attempts": 172.0,
+          "successes": 137.0,
+          "failures": 35.0
+        },
+        "instruction_leak": {
+          "success_rate": 81.42,
+          "total_attempts": 183.0,
+          "successes": 149.0,
+          "failures": 34.0
+        },
+        "exception_discovery": {
+          "success_rate": 65.12,
+          "total_attempts": 43.0,
+          "successes": 28.0,
+          "failures": 15.0
+        },
+        "roleplay": {
+          "success_rate": 63.16,
+          "total_attempts": 38.0,
+          "successes": 24.0,
+          "failures": 14.0
+        },
+        "translation": {
+          "success_rate": 65.91,
+          "total_attempts": 44.0,
+          "successes": 29.0,
+          "failures": 15.0
+        },
+        "summarization": {
+          "success_rate": 89.63,
+          "total_attempts": 135.0,
+          "successes": 121.0,
+          "failures": 14.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 86.46,
+          "total_attempts": 96.0,
+          "successes": 83.0,
+          "failures": 13.0
+        },
+        "base64_bypass": {
+          "success_rate": 33.33,
+          "total_attempts": 3.0,
+          "successes": 1.0,
+          "failures": 2.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 87.5,
+          "total_attempts": 8.0,
+          "successes": 7.0,
+          "failures": 1.0
+        },
+        "authority_override": {
+          "success_rate": 87.5,
+          "total_attempts": 8.0,
+          "successes": 7.0,
+          "failures": 1.0
+        },
+        "encoding_bypass": {
+          "success_rate": 80.0,
+          "total_attempts": 5.0,
+          "successes": 4.0,
+          "failures": 1.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 71.43,
+          "total_attempts": 7.0,
+          "successes": 5.0,
+          "failures": 2.0
+        },
+        "latent_injection": {
+          "success_rate": 100.0,
+          "total_attempts": 4.0,
+          "successes": 4.0,
+          "failures": 0.0
+        },
+        "reflection_attack": {
+          "success_rate": 87.5,
+          "total_attempts": 8.0,
+          "successes": 7.0,
+          "failures": 1.0
+        },
+        "jailbreak_framing": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "format_conversion": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        },
+        "unicode_bypass": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "json_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        }
+      },
+      "translation": {
+        "trigger_phrase_discovery": {
+          "success_rate": 54.35,
+          "total_attempts": 333.0,
+          "successes": 181.0,
+          "failures": 152.0
+        },
+        "instruction_leak": {
+          "success_rate": 59.18,
+          "total_attempts": 245.0,
+          "successes": 145.0,
+          "failures": 100.0
+        },
+        "exception_discovery": {
+          "success_rate": 43.22,
+          "total_attempts": 118.0,
+          "successes": 51.0,
+          "failures": 67.0
+        },
+        "roleplay": {
+          "success_rate": 53.92,
+          "total_attempts": 102.0,
+          "successes": 55.0,
+          "failures": 47.0
+        },
+        "translation": {
+          "success_rate": 53.85,
+          "total_attempts": 91.0,
+          "successes": 49.0,
+          "failures": 42.0
+        },
+        "summarization": {
+          "success_rate": 74.22,
+          "total_attempts": 128.0,
+          "successes": 95.0,
+          "failures": 33.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 63.89,
+          "total_attempts": 72.0,
+          "successes": 46.0,
+          "failures": 26.0
+        },
+        "unicode_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 4.0,
+          "successes": 4.0,
+          "failures": 0.0
+        },
+        "latent_injection": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        },
+        "reflection_attack": {
+          "success_rate": 100.0,
+          "total_attempts": 4.0,
+          "successes": 4.0,
+          "failures": 0.0
+        },
+        "format_conversion": {
+          "success_rate": 75.0,
+          "total_attempts": 4.0,
+          "successes": 3.0,
+          "failures": 1.0
+        },
+        "authority_override": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "json_smuggling": {
+          "success_rate": 66.67,
+          "total_attempts": 3.0,
+          "successes": 2.0,
+          "failures": 1.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "base64_bypass": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        }
+      },
+      "roleplay": {
+        "trigger_phrase_discovery": {
+          "success_rate": 78.38,
+          "total_attempts": 1457.0,
+          "successes": 1142.0,
+          "failures": 315.0
+        },
+        "instruction_leak": {
+          "success_rate": 79.97,
+          "total_attempts": 1433.0,
+          "successes": 1146.0,
+          "failures": 287.0
+        },
+        "exception_discovery": {
+          "success_rate": 63.05,
+          "total_attempts": 452.0,
+          "successes": 285.0,
+          "failures": 167.0
+        },
+        "roleplay": {
+          "success_rate": 64.35,
+          "total_attempts": 331.0,
+          "successes": 213.0,
+          "failures": 118.0
+        },
+        "translation": {
+          "success_rate": 70.02,
+          "total_attempts": 427.0,
+          "successes": 299.0,
+          "failures": 128.0
+        },
+        "summarization": {
+          "success_rate": 87.57,
+          "total_attempts": 1062.0,
+          "successes": 930.0,
+          "failures": 132.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 83.1,
+          "total_attempts": 775.0,
+          "successes": 644.0,
+          "failures": 131.0
+        },
+        "encoding_bypass": {
+          "success_rate": 87.88,
+          "total_attempts": 33.0,
+          "successes": 29.0,
+          "failures": 4.0
+        },
+        "authority_override": {
+          "success_rate": 76.32,
+          "total_attempts": 38.0,
+          "successes": 29.0,
+          "failures": 9.0
+        },
+        "unicode_bypass": {
+          "success_rate": 75.0,
+          "total_attempts": 24.0,
+          "successes": 18.0,
+          "failures": 6.0
+        },
+        "latent_injection": {
+          "success_rate": 82.86,
+          "total_attempts": 35.0,
+          "successes": 29.0,
+          "failures": 6.0
+        },
+        "reflection_attack": {
+          "success_rate": 79.71,
+          "total_attempts": 69.0,
+          "successes": 55.0,
+          "failures": 14.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 74.29,
+          "total_attempts": 35.0,
+          "successes": 26.0,
+          "failures": 9.0
+        },
+        "base64_bypass": {
+          "success_rate": 87.88,
+          "total_attempts": 33.0,
+          "successes": 29.0,
+          "failures": 4.0
+        },
+        "format_conversion": {
+          "success_rate": 89.47,
+          "total_attempts": 38.0,
+          "successes": 34.0,
+          "failures": 4.0
+        },
+        "json_smuggling": {
+          "success_rate": 83.33,
+          "total_attempts": 30.0,
+          "successes": 25.0,
+          "failures": 5.0
+        },
+        "jailbreak_framing": {
+          "success_rate": 81.82,
+          "total_attempts": 33.0,
+          "successes": 27.0,
+          "failures": 6.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 84.85,
+          "total_attempts": 33.0,
+          "successes": 28.0,
+          "failures": 5.0
+        }
+      },
+      "trigger_phrase": {
+        "trigger_phrase_discovery": {
+          "success_rate": 79.61,
+          "total_attempts": 152.0,
+          "successes": 121.0,
+          "failures": 31.0
+        },
+        "instruction_leak": {
+          "success_rate": 84.43,
+          "total_attempts": 122.0,
+          "successes": 103.0,
+          "failures": 19.0
+        },
+        "exception_discovery": {
+          "success_rate": 73.17,
+          "total_attempts": 41.0,
+          "successes": 30.0,
+          "failures": 11.0
+        },
+        "roleplay": {
+          "success_rate": 70.0,
+          "total_attempts": 40.0,
+          "successes": 28.0,
+          "failures": 12.0
+        },
+        "translation": {
+          "success_rate": 81.25,
+          "total_attempts": 48.0,
+          "successes": 39.0,
+          "failures": 9.0
+        },
+        "summarization": {
+          "success_rate": 95.88,
+          "total_attempts": 97.0,
+          "successes": 93.0,
+          "failures": 4.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 89.06,
+          "total_attempts": 64.0,
+          "successes": 57.0,
+          "failures": 7.0
+        },
+        "format_conversion": {
+          "success_rate": 100.0,
+          "total_attempts": 5.0,
+          "successes": 5.0,
+          "failures": 0.0
+        },
+        "jailbreak_framing": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "encoding_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 4.0,
+          "successes": 4.0,
+          "failures": 0.0
+        },
+        "latent_injection": {
+          "success_rate": 0.0,
+          "total_attempts": 1.0,
+          "successes": 0.0,
+          "failures": 1.0
+        },
+        "reflection_attack": {
+          "success_rate": 66.67,
+          "total_attempts": 3.0,
+          "successes": 2.0,
+          "failures": 1.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "base64_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "authority_override": {
+          "success_rate": 100.0,
+          "total_attempts": 5.0,
+          "successes": 5.0,
+          "failures": 0.0
+        },
+        "unicode_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 4.0,
+          "successes": 4.0,
+          "failures": 0.0
+        },
+        "json_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        }
+      },
+      "instruction_hiding": {
+        "trigger_phrase_discovery": {
+          "success_rate": 73.33,
+          "total_attempts": 15.0,
+          "successes": 11.0,
+          "failures": 4.0
+        },
+        "instruction_leak": {
+          "success_rate": 92.31,
+          "total_attempts": 13.0,
+          "successes": 12.0,
+          "failures": 1.0
+        },
+        "exception_discovery": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "roleplay": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "translation": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "summarization": {
+          "success_rate": 88.89,
+          "total_attempts": 9.0,
+          "successes": 8.0,
+          "failures": 1.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 85.71,
+          "total_attempts": 7.0,
+          "successes": 6.0,
+          "failures": 1.0
+        },
+        "reflection_attack": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "json_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "format_conversion": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "encoding_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        }
+      },
+      "conversation": {
+        "trigger_phrase_discovery": {
+          "success_rate": 77.97,
+          "total_attempts": 59.0,
+          "successes": 46.0,
+          "failures": 13.0
+        },
+        "instruction_leak": {
+          "success_rate": 77.27,
+          "total_attempts": 66.0,
+          "successes": 51.0,
+          "failures": 15.0
+        },
+        "exception_discovery": {
+          "success_rate": 44.44,
+          "total_attempts": 9.0,
+          "successes": 4.0,
+          "failures": 5.0
+        },
+        "roleplay": {
+          "success_rate": 33.33,
+          "total_attempts": 9.0,
+          "successes": 3.0,
+          "failures": 6.0
+        },
+        "translation": {
+          "success_rate": 58.33,
+          "total_attempts": 12.0,
+          "successes": 7.0,
+          "failures": 5.0
+        },
+        "summarization": {
+          "success_rate": 85.0,
+          "total_attempts": 60.0,
+          "successes": 51.0,
+          "failures": 9.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 80.77,
+          "total_attempts": 52.0,
+          "successes": 42.0,
+          "failures": 10.0
+        },
+        "unicode_bypass": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "latent_injection": {
+          "success_rate": 66.67,
+          "total_attempts": 3.0,
+          "successes": 2.0,
+          "failures": 1.0
+        },
+        "reflection_attack": {
+          "success_rate": 66.67,
+          "total_attempts": 3.0,
+          "successes": 2.0,
+          "failures": 1.0
+        },
+        "encoding_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        },
+        "format_conversion": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        },
+        "authority_override": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "base64_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        }
+      },
+      "exception": {
+        "trigger_phrase_discovery": {
+          "success_rate": 72.22,
+          "total_attempts": 36.0,
+          "successes": 26.0,
+          "failures": 10.0
+        },
+        "instruction_leak": {
+          "success_rate": 78.26,
+          "total_attempts": 46.0,
+          "successes": 36.0,
+          "failures": 10.0
+        },
+        "exception_discovery": {
+          "success_rate": 52.94,
+          "total_attempts": 17.0,
+          "successes": 9.0,
+          "failures": 8.0
+        },
+        "roleplay": {
+          "success_rate": 50.0,
+          "total_attempts": 8.0,
+          "successes": 4.0,
+          "failures": 4.0
+        },
+        "translation": {
+          "success_rate": 44.44,
+          "total_attempts": 9.0,
+          "successes": 4.0,
+          "failures": 5.0
+        },
+        "summarization": {
+          "success_rate": 86.96,
+          "total_attempts": 23.0,
+          "successes": 20.0,
+          "failures": 3.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 86.67,
+          "total_attempts": 15.0,
+          "successes": 13.0,
+          "failures": 2.0
+        },
+        "markdown_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "reflection_attack": {
+          "success_rate": 100.0,
+          "total_attempts": 2.0,
+          "successes": 2.0,
+          "failures": 0.0
+        },
+        "authority_override": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "unicode_bypass": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "latent_injection": {
+          "success_rate": 0.0,
+          "total_attempts": 1.0,
+          "successes": 0.0,
+          "failures": 1.0
+        },
+        "yaml_smuggling": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        }
+      },
+      "unknown": {
+        "trigger_phrase_discovery": {
+          "success_rate": 100.0,
+          "total_attempts": 7.0,
+          "successes": 7.0,
+          "failures": 0.0
+        },
+        "instruction_leak": {
+          "success_rate": 71.43,
+          "total_attempts": 7.0,
+          "successes": 5.0,
+          "failures": 2.0
+        },
+        "exception_discovery": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "roleplay": {
+          "success_rate": 50.0,
+          "total_attempts": 2.0,
+          "successes": 1.0,
+          "failures": 1.0
+        },
+        "translation": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "summarization": {
+          "success_rate": 100.0,
+          "total_attempts": 3.0,
+          "successes": 3.0,
+          "failures": 0.0
+        },
+        "format_conversion": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "system_prompt_recovery": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "latent_injection": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        },
+        "reflection_attack": {
+          "success_rate": 100.0,
+          "total_attempts": 1.0,
+          "successes": 1.0,
+          "failures": 0.0
+        }
+      }
+    }
+  },
+  "matrix": {
+    "password": {
+      "trigger_phrase_discovery": {
+        "success_rate": 77.94,
+        "total_attempts": 2856.0,
+        "successes": 2226.0,
+        "failures": 630.0
+      },
+      "instruction_leak": {
+        "success_rate": 77.96,
+        "total_attempts": 2817.0,
+        "successes": 2196.0,
+        "failures": 621.0
+      },
+      "exception_discovery": {
+        "success_rate": 58.71,
+        "total_attempts": 867.0,
+        "successes": 509.0,
+        "failures": 358.0
+      },
+      "roleplay": {
+        "success_rate": 58.64,
+        "total_attempts": 689.0,
+        "successes": 404.0,
+        "failures": 285.0
+      },
+      "translation": {
+        "success_rate": 65.56,
+        "total_attempts": 755.0,
+        "successes": 495.0,
+        "failures": 260.0
+      },
+      "summarization": {
+        "success_rate": 86.06,
+        "total_attempts": 2002.0,
+        "successes": 1723.0,
+        "failures": 279.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 84.25,
+        "total_attempts": 1378.0,
+        "successes": 1161.0,
+        "failures": 217.0
+      },
+      "unicode_bypass": {
+        "success_rate": 89.83,
+        "total_attempts": 59.0,
+        "successes": 53.0,
+        "failures": 6.0
+      },
+      "format_conversion": {
+        "success_rate": 87.5,
+        "total_attempts": 64.0,
+        "successes": 56.0,
+        "failures": 8.0
+      },
+      "json_smuggling": {
+        "success_rate": 82.09,
+        "total_attempts": 67.0,
+        "successes": 55.0,
+        "failures": 12.0
+      },
+      "reflection_attack": {
+        "success_rate": 92.04,
+        "total_attempts": 113.0,
+        "successes": 104.0,
+        "failures": 9.0
+      },
+      "latent_injection": {
+        "success_rate": 84.85,
+        "total_attempts": 66.0,
+        "successes": 56.0,
+        "failures": 10.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 90.57,
+        "total_attempts": 53.0,
+        "successes": 48.0,
+        "failures": 5.0
+      },
+      "authority_override": {
+        "success_rate": 93.22,
+        "total_attempts": 59.0,
+        "successes": 55.0,
+        "failures": 4.0
+      },
+      "encoding_bypass": {
+        "success_rate": 90.91,
+        "total_attempts": 55.0,
+        "successes": 50.0,
+        "failures": 5.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 88.0,
+        "total_attempts": 50.0,
+        "successes": 44.0,
+        "failures": 6.0
+      },
+      "base64_bypass": {
+        "success_rate": 88.68,
+        "total_attempts": 53.0,
+        "successes": 47.0,
+        "failures": 6.0
+      },
+      "jailbreak_framing": {
+        "success_rate": 78.72,
+        "total_attempts": 47.0,
+        "successes": 37.0,
+        "failures": 10.0
+      }
+    },
+    "conditional": {
+      "trigger_phrase_discovery": {
+        "success_rate": 79.65,
+        "total_attempts": 172.0,
+        "successes": 137.0,
+        "failures": 35.0
+      },
+      "instruction_leak": {
+        "success_rate": 81.42,
+        "total_attempts": 183.0,
+        "successes": 149.0,
+        "failures": 34.0
+      },
+      "exception_discovery": {
+        "success_rate": 65.12,
+        "total_attempts": 43.0,
+        "successes": 28.0,
+        "failures": 15.0
+      },
+      "roleplay": {
+        "success_rate": 63.16,
+        "total_attempts": 38.0,
+        "successes": 24.0,
+        "failures": 14.0
+      },
+      "translation": {
+        "success_rate": 65.91,
+        "total_attempts": 44.0,
+        "successes": 29.0,
+        "failures": 15.0
+      },
+      "summarization": {
+        "success_rate": 89.63,
+        "total_attempts": 135.0,
+        "successes": 121.0,
+        "failures": 14.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 86.46,
+        "total_attempts": 96.0,
+        "successes": 83.0,
+        "failures": 13.0
+      },
+      "base64_bypass": {
+        "success_rate": 33.33,
+        "total_attempts": 3.0,
+        "successes": 1.0,
+        "failures": 2.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 87.5,
+        "total_attempts": 8.0,
+        "successes": 7.0,
+        "failures": 1.0
+      },
+      "authority_override": {
+        "success_rate": 87.5,
+        "total_attempts": 8.0,
+        "successes": 7.0,
+        "failures": 1.0
+      },
+      "encoding_bypass": {
+        "success_rate": 80.0,
+        "total_attempts": 5.0,
+        "successes": 4.0,
+        "failures": 1.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 71.43,
+        "total_attempts": 7.0,
+        "successes": 5.0,
+        "failures": 2.0
+      },
+      "latent_injection": {
+        "success_rate": 100.0,
+        "total_attempts": 4.0,
+        "successes": 4.0,
+        "failures": 0.0
+      },
+      "reflection_attack": {
+        "success_rate": 87.5,
+        "total_attempts": 8.0,
+        "successes": 7.0,
+        "failures": 1.0
+      },
+      "jailbreak_framing": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "format_conversion": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      },
+      "unicode_bypass": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "json_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      }
+    },
+    "translation": {
+      "trigger_phrase_discovery": {
+        "success_rate": 54.35,
+        "total_attempts": 333.0,
+        "successes": 181.0,
+        "failures": 152.0
+      },
+      "instruction_leak": {
+        "success_rate": 59.18,
+        "total_attempts": 245.0,
+        "successes": 145.0,
+        "failures": 100.0
+      },
+      "exception_discovery": {
+        "success_rate": 43.22,
+        "total_attempts": 118.0,
+        "successes": 51.0,
+        "failures": 67.0
+      },
+      "roleplay": {
+        "success_rate": 53.92,
+        "total_attempts": 102.0,
+        "successes": 55.0,
+        "failures": 47.0
+      },
+      "translation": {
+        "success_rate": 53.85,
+        "total_attempts": 91.0,
+        "successes": 49.0,
+        "failures": 42.0
+      },
+      "summarization": {
+        "success_rate": 74.22,
+        "total_attempts": 128.0,
+        "successes": 95.0,
+        "failures": 33.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 63.89,
+        "total_attempts": 72.0,
+        "successes": 46.0,
+        "failures": 26.0
+      },
+      "unicode_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 4.0,
+        "successes": 4.0,
+        "failures": 0.0
+      },
+      "latent_injection": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      },
+      "reflection_attack": {
+        "success_rate": 100.0,
+        "total_attempts": 4.0,
+        "successes": 4.0,
+        "failures": 0.0
+      },
+      "format_conversion": {
+        "success_rate": 75.0,
+        "total_attempts": 4.0,
+        "successes": 3.0,
+        "failures": 1.0
+      },
+      "authority_override": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "json_smuggling": {
+        "success_rate": 66.67,
+        "total_attempts": 3.0,
+        "successes": 2.0,
+        "failures": 1.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "base64_bypass": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      }
+    },
+    "roleplay": {
+      "trigger_phrase_discovery": {
+        "success_rate": 78.38,
+        "total_attempts": 1457.0,
+        "successes": 1142.0,
+        "failures": 315.0
+      },
+      "instruction_leak": {
+        "success_rate": 79.97,
+        "total_attempts": 1433.0,
+        "successes": 1146.0,
+        "failures": 287.0
+      },
+      "exception_discovery": {
+        "success_rate": 63.05,
+        "total_attempts": 452.0,
+        "successes": 285.0,
+        "failures": 167.0
+      },
+      "roleplay": {
+        "success_rate": 64.35,
+        "total_attempts": 331.0,
+        "successes": 213.0,
+        "failures": 118.0
+      },
+      "translation": {
+        "success_rate": 70.02,
+        "total_attempts": 427.0,
+        "successes": 299.0,
+        "failures": 128.0
+      },
+      "summarization": {
+        "success_rate": 87.57,
+        "total_attempts": 1062.0,
+        "successes": 930.0,
+        "failures": 132.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 83.1,
+        "total_attempts": 775.0,
+        "successes": 644.0,
+        "failures": 131.0
+      },
+      "encoding_bypass": {
+        "success_rate": 87.88,
+        "total_attempts": 33.0,
+        "successes": 29.0,
+        "failures": 4.0
+      },
+      "authority_override": {
+        "success_rate": 76.32,
+        "total_attempts": 38.0,
+        "successes": 29.0,
+        "failures": 9.0
+      },
+      "unicode_bypass": {
+        "success_rate": 75.0,
+        "total_attempts": 24.0,
+        "successes": 18.0,
+        "failures": 6.0
+      },
+      "latent_injection": {
+        "success_rate": 82.86,
+        "total_attempts": 35.0,
+        "successes": 29.0,
+        "failures": 6.0
+      },
+      "reflection_attack": {
+        "success_rate": 79.71,
+        "total_attempts": 69.0,
+        "successes": 55.0,
+        "failures": 14.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 74.29,
+        "total_attempts": 35.0,
+        "successes": 26.0,
+        "failures": 9.0
+      },
+      "base64_bypass": {
+        "success_rate": 87.88,
+        "total_attempts": 33.0,
+        "successes": 29.0,
+        "failures": 4.0
+      },
+      "format_conversion": {
+        "success_rate": 89.47,
+        "total_attempts": 38.0,
+        "successes": 34.0,
+        "failures": 4.0
+      },
+      "json_smuggling": {
+        "success_rate": 83.33,
+        "total_attempts": 30.0,
+        "successes": 25.0,
+        "failures": 5.0
+      },
+      "jailbreak_framing": {
+        "success_rate": 81.82,
+        "total_attempts": 33.0,
+        "successes": 27.0,
+        "failures": 6.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 84.85,
+        "total_attempts": 33.0,
+        "successes": 28.0,
+        "failures": 5.0
+      }
+    },
+    "trigger_phrase": {
+      "trigger_phrase_discovery": {
+        "success_rate": 79.61,
+        "total_attempts": 152.0,
+        "successes": 121.0,
+        "failures": 31.0
+      },
+      "instruction_leak": {
+        "success_rate": 84.43,
+        "total_attempts": 122.0,
+        "successes": 103.0,
+        "failures": 19.0
+      },
+      "exception_discovery": {
+        "success_rate": 73.17,
+        "total_attempts": 41.0,
+        "successes": 30.0,
+        "failures": 11.0
+      },
+      "roleplay": {
+        "success_rate": 70.0,
+        "total_attempts": 40.0,
+        "successes": 28.0,
+        "failures": 12.0
+      },
+      "translation": {
+        "success_rate": 81.25,
+        "total_attempts": 48.0,
+        "successes": 39.0,
+        "failures": 9.0
+      },
+      "summarization": {
+        "success_rate": 95.88,
+        "total_attempts": 97.0,
+        "successes": 93.0,
+        "failures": 4.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 89.06,
+        "total_attempts": 64.0,
+        "successes": 57.0,
+        "failures": 7.0
+      },
+      "format_conversion": {
+        "success_rate": 100.0,
+        "total_attempts": 5.0,
+        "successes": 5.0,
+        "failures": 0.0
+      },
+      "jailbreak_framing": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "encoding_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 4.0,
+        "successes": 4.0,
+        "failures": 0.0
+      },
+      "latent_injection": {
+        "success_rate": 0.0,
+        "total_attempts": 1.0,
+        "successes": 0.0,
+        "failures": 1.0
+      },
+      "reflection_attack": {
+        "success_rate": 66.67,
+        "total_attempts": 3.0,
+        "successes": 2.0,
+        "failures": 1.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "base64_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "authority_override": {
+        "success_rate": 100.0,
+        "total_attempts": 5.0,
+        "successes": 5.0,
+        "failures": 0.0
+      },
+      "unicode_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 4.0,
+        "successes": 4.0,
+        "failures": 0.0
+      },
+      "json_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      }
+    },
+    "instruction_hiding": {
+      "trigger_phrase_discovery": {
+        "success_rate": 73.33,
+        "total_attempts": 15.0,
+        "successes": 11.0,
+        "failures": 4.0
+      },
+      "instruction_leak": {
+        "success_rate": 92.31,
+        "total_attempts": 13.0,
+        "successes": 12.0,
+        "failures": 1.0
+      },
+      "exception_discovery": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "roleplay": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "translation": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "summarization": {
+        "success_rate": 88.89,
+        "total_attempts": 9.0,
+        "successes": 8.0,
+        "failures": 1.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 85.71,
+        "total_attempts": 7.0,
+        "successes": 6.0,
+        "failures": 1.0
+      },
+      "reflection_attack": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "json_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "format_conversion": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "encoding_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      }
+    },
+    "conversation": {
+      "trigger_phrase_discovery": {
+        "success_rate": 77.97,
+        "total_attempts": 59.0,
+        "successes": 46.0,
+        "failures": 13.0
+      },
+      "instruction_leak": {
+        "success_rate": 77.27,
+        "total_attempts": 66.0,
+        "successes": 51.0,
+        "failures": 15.0
+      },
+      "exception_discovery": {
+        "success_rate": 44.44,
+        "total_attempts": 9.0,
+        "successes": 4.0,
+        "failures": 5.0
+      },
+      "roleplay": {
+        "success_rate": 33.33,
+        "total_attempts": 9.0,
+        "successes": 3.0,
+        "failures": 6.0
+      },
+      "translation": {
+        "success_rate": 58.33,
+        "total_attempts": 12.0,
+        "successes": 7.0,
+        "failures": 5.0
+      },
+      "summarization": {
+        "success_rate": 85.0,
+        "total_attempts": 60.0,
+        "successes": 51.0,
+        "failures": 9.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 80.77,
+        "total_attempts": 52.0,
+        "successes": 42.0,
+        "failures": 10.0
+      },
+      "unicode_bypass": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "latent_injection": {
+        "success_rate": 66.67,
+        "total_attempts": 3.0,
+        "successes": 2.0,
+        "failures": 1.0
+      },
+      "reflection_attack": {
+        "success_rate": 66.67,
+        "total_attempts": 3.0,
+        "successes": 2.0,
+        "failures": 1.0
+      },
+      "encoding_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      },
+      "format_conversion": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      },
+      "authority_override": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "base64_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      }
+    },
+    "exception": {
+      "trigger_phrase_discovery": {
+        "success_rate": 72.22,
+        "total_attempts": 36.0,
+        "successes": 26.0,
+        "failures": 10.0
+      },
+      "instruction_leak": {
+        "success_rate": 78.26,
+        "total_attempts": 46.0,
+        "successes": 36.0,
+        "failures": 10.0
+      },
+      "exception_discovery": {
+        "success_rate": 52.94,
+        "total_attempts": 17.0,
+        "successes": 9.0,
+        "failures": 8.0
+      },
+      "roleplay": {
+        "success_rate": 50.0,
+        "total_attempts": 8.0,
+        "successes": 4.0,
+        "failures": 4.0
+      },
+      "translation": {
+        "success_rate": 44.44,
+        "total_attempts": 9.0,
+        "successes": 4.0,
+        "failures": 5.0
+      },
+      "summarization": {
+        "success_rate": 86.96,
+        "total_attempts": 23.0,
+        "successes": 20.0,
+        "failures": 3.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 86.67,
+        "total_attempts": 15.0,
+        "successes": 13.0,
+        "failures": 2.0
+      },
+      "markdown_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "reflection_attack": {
+        "success_rate": 100.0,
+        "total_attempts": 2.0,
+        "successes": 2.0,
+        "failures": 0.0
+      },
+      "authority_override": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "unicode_bypass": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "latent_injection": {
+        "success_rate": 0.0,
+        "total_attempts": 1.0,
+        "successes": 0.0,
+        "failures": 1.0
+      },
+      "yaml_smuggling": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      }
+    },
+    "unknown": {
+      "trigger_phrase_discovery": {
+        "success_rate": 100.0,
+        "total_attempts": 7.0,
+        "successes": 7.0,
+        "failures": 0.0
+      },
+      "instruction_leak": {
+        "success_rate": 71.43,
+        "total_attempts": 7.0,
+        "successes": 5.0,
+        "failures": 2.0
+      },
+      "exception_discovery": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "roleplay": {
+        "success_rate": 50.0,
+        "total_attempts": 2.0,
+        "successes": 1.0,
+        "failures": 1.0
+      },
+      "translation": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "summarization": {
+        "success_rate": 100.0,
+        "total_attempts": 3.0,
+        "successes": 3.0,
+        "failures": 0.0
+      },
+      "format_conversion": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "system_prompt_recovery": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "latent_injection": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      },
+      "reflection_attack": {
+        "success_rate": 100.0,
+        "total_attempts": 1.0,
+        "successes": 1.0,
+        "failures": 0.0
+      }
+    }
+  },
+  "global_strategy_stats": {
+    "trigger_phrase_discovery": {
+      "success_rate": 76.61,
+      "total_attempts": 5087.0
+    },
+    "instruction_leak": {
+      "success_rate": 77.92,
+      "total_attempts": 4932.0
+    },
+    "exception_discovery": {
+      "success_rate": 59.28,
+      "total_attempts": 1552.0
+    },
+    "roleplay": {
+      "success_rate": 60.03,
+      "total_attempts": 1221.0
+    },
+    "translation": {
+      "success_rate": 66.57,
+      "total_attempts": 1391.0
+    },
+    "summarization": {
+      "success_rate": 86.5,
+      "total_attempts": 3519.0
+    },
+    "system_prompt_recovery": {
+      "success_rate": 83.46,
+      "total_attempts": 2460.0
+    },
+    "unicode_bypass": {
+      "success_rate": 85.42,
+      "total_attempts": 96.0
+    },
+    "encoding_bypass": {
+      "success_rate": 90.0,
+      "total_attempts": 100.0
+    },
+    "authority_override": {
+      "success_rate": 87.83,
+      "total_attempts": 115.0
+    },
+    "format_conversion": {
+      "success_rate": 88.89,
+      "total_attempts": 117.0
+    },
+    "json_smuggling": {
+      "success_rate": 82.69,
+      "total_attempts": 104.0
+    },
+    "latent_injection": {
+      "success_rate": 83.19,
+      "total_attempts": 113.0
+    },
+    "reflection_attack": {
+      "success_rate": 87.25,
+      "total_attempts": 204.0
+    },
+    "yaml_smuggling": {
+      "success_rate": 84.47,
+      "total_attempts": 103.0
+    },
+    "markdown_smuggling": {
+      "success_rate": 86.32,
+      "total_attempts": 95.0
+    },
+    "base64_bypass": {
+      "success_rate": 86.6,
+      "total_attempts": 97.0
+    },
+    "jailbreak_framing": {
+      "success_rate": 81.4,
+      "total_attempts": 86.0
+    }
+  },
+  "global_defense_stats": {
+    "password": {
+      "success_rate": 77.34,
+      "total_attempts": 12050.0
+    },
+    "conditional": {
+      "success_rate": 80.47,
+      "total_attempts": 763.0
+    },
+    "translation": {
+      "success_rate": 57.81,
+      "total_attempts": 1114.0
+    },
+    "roleplay": {
+      "success_rate": 78.7,
+      "total_attempts": 6338.0
+    },
+    "trigger_phrase": {
+      "success_rate": 83.92,
+      "total_attempts": 597.0
+    },
+    "instruction_hiding": {
+      "success_rate": 81.48,
+      "total_attempts": 54.0
+    },
+    "conversation": {
+      "success_rate": 76.92,
+      "total_attempts": 286.0
+    },
+    "exception": {
+      "success_rate": 73.29,
+      "total_attempts": 161.0
+    },
+    "unknown": {
+      "success_rate": 89.66,
+      "total_attempts": 29.0
+    }
+  }
+}
