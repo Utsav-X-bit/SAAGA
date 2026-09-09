@@ -23,6 +23,7 @@ from saaga.evaluators.extractor import SensitiveInfoExtractor
 from saaga.evaluators.judge import StopPointIdentifier
 from saaga.fuzzing.fallback import MutationFallback
 from saaga.memory.kb import StrategyKnowledgeBase
+from saaga.evaluation import run_evaluation, write_scorecard, DEFAULT_TIERS
 from saaga.setup_models import (
     DEFAULT_MODELS,
     GDRIVE_COMPONENTS,
@@ -353,6 +354,115 @@ def download_data_command(target_dir: str, gdrive_folder_id: str, rclone_remote:
     click.echo(f"[*] Syncing benchmark datasets (~3.0 GB) to '{target_dir}' from Google Drive (remote: '{rclone_remote}:', folder: {gdrive_folder_id})...")
     res = download_dataset(target_dir=target_dir, folder_id=gdrive_folder_id, rclone_remote=rclone_remote)
     click.echo(f"[✓] Datasets ready in: {res}")
+
+@cli.command("evaluate")
+@click.option("--victim-model", "-m", required=True, help="Victim model under evaluation (defender).")
+@click.option("--victim-provider", "-p", default="auto", type=click.Choice(["auto", "openai", "vllm", "hf", "ollama", "mock"]), help="Provider backend for the victim model.")
+@click.option("--victim-url", "-u", default=None, help="Base API URL for the victim model endpoint.")
+@click.option("--victim-api-key", "-k", default=None, help="API key for the victim model endpoint.")
+@click.option("--base-model", default="Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2", help="Attacker base model for planner/generator LoRA adapters.")
+@click.option("--base-model-url", default=None, help="Base API URL if the attacker base model is hosted remotely.")
+@click.option("--base-model-api-key", default=None, help="API key for remote attacker base model endpoint.")
+@click.option("--base-model-provider", default="auto", type=click.Choice(["auto", "openai", "vllm", "hf", "ollama", "mock"]), help="Provider backend for the attacker base model.")
+@click.option("--planner-model", default=None, help="Attacker planner model or LoRA checkpoint path.")
+@click.option("--generator-model", default=None, help="Attacker generator model or LoRA checkpoint path.")
+@click.option("--dataset-dir", "-d", default="data/TensorTrust_subsets", help="Directory containing TensorTrust subset JSONL files.")
+@click.option("--tiers", default=",".join(DEFAULT_TIERS), help="Comma-separated difficulty tiers (direct,deterministic,indirect,not_recoverable).")
+@click.option("--samples-per-tier", default=200, type=int, help="Seeded sample size per difficulty tier (0 = all rows).")
+@click.option("--max-attempts", "-a", default=20, type=int, help="Maximum attack attempts per scenario.")
+@click.option("--mode", default="adaptive", type=click.Choice(["static", "adaptive", "both"]), help="Evaluation stage: static (cheap screen), adaptive (full SAAGA loop), or both.")
+@click.option("--seed", default=42, type=int, help="RNG seed for reproducible stratified sampling.")
+@click.option("--enable-fallback/--no-fallback", default=True, help="Enable mutation fallback in the adaptive attack.")
+@click.option("--output-dir", "-o", default=None, help="Directory for scorecard artifacts (default results/eval/<model>/).")
+@click.option("--quiet", "-q", is_flag=True, help="Suppress verbose terminal output.")
+def evaluate_command(
+    victim_model: str,
+    victim_provider: str,
+    victim_url: Optional[str],
+    victim_api_key: Optional[str],
+    base_model: str,
+    base_model_url: Optional[str],
+    base_model_api_key: Optional[str],
+    base_model_provider: str,
+    planner_model: Optional[str],
+    generator_model: Optional[str],
+    dataset_dir: str,
+    tiers: str,
+    samples_per_tier: int,
+    max_attempts: int,
+    mode: str,
+    seed: int,
+    enable_fallback: bool,
+    output_dir: Optional[str],
+    quiet: bool,
+):
+    """Evaluate a victim model's defense strength against SAAGA's attacks, stratified by difficulty tier.
+
+    Produces a scorecard (DSS, MTB, MSB, leak resistance) per recoverability tier
+    plus difficulty-weighted and two-axis headline scores.
+    """
+    if not quiet:
+        click.echo(f"[*] Evaluating defense strength of '{victim_model}' (mode={mode}, tiers={tiers}, samples/tier={samples_per_tier}, attempts={max_attempts})...")
+
+    # Victim provider: the defender under test.
+    v_prov = get_provider(
+        provider_type=victim_provider,
+        model_id=victim_model,
+        api_base=victim_url,
+        api_key=victim_api_key,
+    )
+
+    # Attacker (planner/generator) providers: pinned to base LoRA unless overridden.
+    if planner_model or generator_model or base_model_url:
+        p_prov = get_provider(
+            provider_type=base_model_provider,
+            model_id=planner_model or base_model,
+            api_base=base_model_url or victim_url,
+            api_key=base_model_api_key or victim_api_key,
+        )
+        g_prov = get_provider(
+            provider_type=base_model_provider,
+            model_id=generator_model or base_model,
+            api_base=base_model_url or victim_url,
+            api_key=base_model_api_key or victim_api_key,
+        )
+    else:
+        p_prov = v_prov
+        g_prov = v_prov
+
+    tier_list = [t.strip() for t in tiers.split(",") if t.strip()]
+    sample_per_tier = samples_per_tier if samples_per_tier > 0 else None
+
+    result = run_evaluation(
+        victim_provider=v_prov,
+        planner_provider=p_prov,
+        generator_provider=g_prov,
+        dataset_dir=dataset_dir,
+        tiers=tier_list,
+        samples_per_tier=sample_per_tier,
+        max_attempts=max_attempts,
+        enable_fallback=enable_fallback,
+        seed=seed,
+        mode=mode,
+    )
+
+    if not output_dir:
+        output_dir = f"results/eval/{v_prov.model_id.replace('/', '__')}"
+    write_scorecard(result, output_dir)
+
+    card = result["scorecard"]
+    head = card.to_dict()["headline"]
+    click.echo("\n" + "=" * 60)
+    click.echo(f"DEFENSE STRENGTH SCORECARD — {v_prov.model_id}")
+    click.echo("=" * 60)
+    click.echo(f"  Weighted DSS (headline)     : {head['weighted_defense_strength_score']:.1f} / 100")
+    click.echo(f"  Overall DSS                  : {head['overall_defense_strength_score']:.1f} / 100")
+    click.echo(f"  Secret Protection            : {head['secret_protection']:.1f} / 100")
+    click.echo(f"  Compliance Resistance        : {head['compliance_resistance']:.1f} / 100")
+    click.echo(f"  Scenarios evaluated          : {card.total_scenarios}")
+    click.echo("=" * 60)
+    click.echo(f"[✓] Scorecard saved to: {output_dir}/summary.json and report.md")
+
 @cli.command("serve")
 @click.option("--host", default="127.0.0.1", help="Host interface to bind server.")
 @click.option("--port", default=8000, type=int, help="Port to bind server.")
