@@ -23,10 +23,14 @@ from saaga.evaluators.extractor import SensitiveInfoExtractor
 from saaga.evaluators.judge import StopPointIdentifier
 from saaga.fuzzing.fallback import MutationFallback
 from saaga.memory.kb import StrategyKnowledgeBase
-from saaga.memory.rag import DefenseRetriever
-from saaga.memory.updater import KBUpdater
-from saaga.reporting.layout import runs_root, run_filename
-from saaga.setup_models import setup_all_models, DEFAULT_MODELS
+from saaga.setup_models import (
+    DEFAULT_MODELS,
+    GDRIVE_COMPONENTS,
+    COMPONENT_ALIASES,
+    DEFAULT_GDRIVE_FOLDER_ID,
+    setup_all_models,
+    download_dataset,
+)
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -277,43 +281,71 @@ def bench_command(
 @cli.command("download-models")
 @click.argument("component", required=False, default=None)
 @click.option("--target-dir", "-t", default="models", help="Directory where models will be downloaded.")
-@click.option("--components", "-c", default=None, help="Comma-separated components to download (e.g. 'tl-mutator,embedding,judge').")
+@click.option("--components", "-c", default=None, help="Comma-separated components to download (e.g. 'access-code-predictor,judge,translation').")
 @click.option("--hf-token", default=None, help="HuggingFace access token.")
+@click.option("--gdrive-folder-id", default=DEFAULT_GDRIVE_FOLDER_ID, help="Google Drive public folder ID for trained assets.")
 @click.option("--list-available", "-l", is_flag=True, help="List all available downloadable components.")
-def download_models_command(component: Optional[str], target_dir: str, components: Optional[str], hf_token: Optional[str], list_available: bool):
-    """Download trained models, tokenizers, and weights from HuggingFace Hub or cloud storage.
+def download_models_command(
+    component: Optional[str],
+    target_dir: str,
+    components: Optional[str],
+    hf_token: Optional[str],
+    gdrive_folder_id: str,
+    list_available: bool,
+):
+    """Download trained models, tokenizers, and weights from HuggingFace Hub or Google Drive.
 
     Examples:
 
-      saaga download-models tl-mutator
+      saaga download-models access-code-predictor
+
+      saaga download-models generator-lora
 
       saaga download-models base-lora
 
-      saaga download-models --components "embedding,judge,translation"
+      saaga download-models --components "access-code-predictor,judge,translation"
     """
     if list_available:
         click.echo("Available SAAGA model components:")
+        click.echo("\n--- Google Drive Trained Assets ---")
+        for name, info in GDRIVE_COMPONENTS.items():
+            click.echo(f"  - {name:22s}: {info['remote_path']} ({info['description']})")
+        click.echo("\n--- HuggingFace Hub Models ---")
         for name, info in DEFAULT_MODELS.items():
-            click.echo(f"  - {name:15s}: {info['repo_id']} ({info['description']})")
+            click.echo(f"  - {name:22s}: {info['repo_id']} ({info['description']})")
         click.echo("\nAliases:")
-        click.echo("  - tl-mutator     : Alias for translation (facebook/nllb-200-distilled-600M)")
-        click.echo("  - base-lora      : Alias for base model (Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2)")
-        click.echo("  - victim         : Alias for victim model (meta-llama/Meta-Llama-3-8B-Instruct)")
+        click.echo("  - ac-predictor         : Alias for access-code-predictor")
+        click.echo("  - tl-mutator           : Alias for translation (facebook/nllb-200-distilled-600M)")
+        click.echo("  - base-lora            : Alias for base model (Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2)")
+        click.echo("  - victim               : Alias for victim model (meta-llama/Meta-Llama-3-8B-Instruct)")
         return
 
-    # Positional argument takes precedence if supplied
     active_components = []
     if component:
         active_components.append(component.strip())
     if components:
         active_components.extend([c.strip() for c in components.split(",") if c.strip()])
     if not active_components:
-        active_components = ["embedding", "translation"]
+        active_components = ["access-code-predictor", "embedding", "translation"]
 
-    click.echo(f"[*] Downloading SAAGA model components {active_components} to '{target_dir}'...")
-    results = setup_all_models(target_root=target_dir, components=active_components, hf_token=hf_token)
+    click.echo(f"[*] Downloading SAAGA components {active_components}...")
+    results = setup_all_models(
+        target_root=target_dir,
+        components=active_components,
+        hf_token=hf_token,
+        gdrive_folder_id=gdrive_folder_id,
+    )
     click.echo(f"[✓] Download completed. {len(results)} components ready.")
 
+
+@cli.command("download-data")
+@click.option("--target-dir", "-t", default="data", help="Directory where datasets will be installed.")
+@click.option("--gdrive-folder-id", default=DEFAULT_GDRIVE_FOLDER_ID, help="Google Drive public folder ID.")
+def download_data_command(target_dir: str, gdrive_folder_id: str):
+    """Download full benchmark datasets and TensorTrust splits from Google Drive."""
+    click.echo(f"[*] Syncing benchmark datasets to '{target_dir}' from Google Drive ({gdrive_folder_id})...")
+    res = download_dataset(target_dir=target_dir, folder_id=gdrive_folder_id)
+    click.echo(f"[✓] Datasets ready in: {res}")
 
 @cli.command("serve")
 @click.option("--host", default="127.0.0.1", help="Host interface to bind server.")
