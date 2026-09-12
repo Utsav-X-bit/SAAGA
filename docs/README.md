@@ -61,3 +61,24 @@ The documentation has been consolidated into three canonical categories:
 - Multi-GPU HPC execution via SLURM (`hpc/saaga_benchmark_4gpu_vllm.sh`)
 - Python Programmatic API with runnable code examples
 - Troubleshooting and common operational issues
+
+---
+
+## 📊 4. Evaluation Metrics & Mathematical Formulation
+**[`EVALUATION_METRICS.md`](EVALUATION_METRICS.md)**
+
+*Target Audience:* Researchers, benchmark authors, and safety evaluation teams.
+
+*Key Contents:*
+- The Two-Axis Evaluation Framework: Recoverability Difficulty vs. Model Robustness
+- Controlled Difficulty Tiers (`direct`, `deterministic`, `indirect`, `not_recoverable`)
+- 4-Signal Deterministic Verification Ladder (`gt_leak`, `access_granted`, `verified_candidate`, `extractor_match`, `none`)
+- Severity of Breach ladder ($S_{\text{break}} \in [0.0, 1.0]$)
+- Mathematical formulas for all primary scores:
+  - Per-Tier Defense Strength Score ($DSS_\tau$)
+  - Headline Difficulty-Weighted Defense Strength Score ($DSS_w$)
+  - Secret Protection ($SP$) and Compliance Resistance ($CR$) two-axis decomposition
+- Auxiliary Metrics: Mean Attempts to Break ($MTB$), Mean Severity of Break ($MSB$), Leak Resistance ($LR$)
+- Dynamic search scores: Cooperation Score ($S_{\text{coop}}$) and Mutation Fallback Score ($S_{\text{fallback}}$)
+- Diagnostic Failure Mode Classification Taxonomy
+- Empirical 3-model benchmark comparison table (Llama-3-8B vs. Mistral-7B vs. Gemma-2B)

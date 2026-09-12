@@ -20,6 +20,11 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_ACP_MODEL_PATH = "experiment/access_code_predictor"
 FALLBACK_BASE_MODEL = "distilbert-base-uncased"
+# Module-level singleton caches for AccessCodePredictor
+_CACHED_ACP_MODEL: Optional[Any] = None
+_CACHED_ACP_TOKENIZER: Optional[Any] = None
+_CACHED_ACP_PATH: Optional[str] = None
+_CACHED_ACP_DEVICE: Optional[str] = None
 
 LABEL_MAP: dict[int, str] = {
     0: "TOKEN",
@@ -91,12 +96,16 @@ class AccessCodePredictor:
         if device:
             self.device_str = device
         else:
-            try:
-                import torch
+            configured_dev = os.environ.get("SAAGA_EVALUATOR_DEVICE")
+            if configured_dev:
+                self.device_str = configured_dev
+            else:
+                try:
+                    import torch
 
-                self.device_str = "cuda" if torch.cuda.is_available() else "cpu"
-            except ImportError:
-                self.device_str = "cpu"
+                    self.device_str = "cuda" if torch.cuda.is_available() else "cpu"
+                except ImportError:
+                    self.device_str = "cpu"
 
         self._is_loaded = self.model is not None and self.tokenizer is not None
         self._load_attempted = False
@@ -111,9 +120,15 @@ class AccessCodePredictor:
 
         Returns True if successful, False if falling back to heuristic.
         """
+        global _CACHED_ACP_MODEL, _CACHED_ACP_TOKENIZER, _CACHED_ACP_PATH, _CACHED_ACP_DEVICE
         self._load_attempted = True
         path = model_path or self.model_path
-
+        if _CACHED_ACP_MODEL is not None and _CACHED_ACP_PATH == path:
+            self.model = _CACHED_ACP_MODEL
+            self.tokenizer = _CACHED_ACP_TOKENIZER
+            self.device_str = _CACHED_ACP_DEVICE or self.device_str
+            self._is_loaded = True
+            return True
         try:
             import torch
             from transformers import AutoModelForSequenceClassification, AutoTokenizer

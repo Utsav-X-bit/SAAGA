@@ -28,6 +28,12 @@ from saaga.evaluators.verifier import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+
+# Module-level singleton caches for ranker model and tokenizer
+_CACHED_RANKER_MODEL: Optional[Any] = None
+_CACHED_RANKER_TOKENIZER: Optional[Any] = None
+_CACHED_RANKER_PATH: Optional[str] = None
+_CACHED_RANKER_DEVICE: Optional[Any] = None
 # Layer 1: Regex Patterns (17 patterns)
 # ---------------------------------------------------------------------------
 EXTRACTOR_PATTERNS: list[str] = [
@@ -188,25 +194,36 @@ class SensitiveInfoExtractor:
         self.current_scenario = scenario
 
     def _init_learned_ranker(self, path: str):
-        """Initialize learned ranker model from path."""
+        """Initialize learned ranker model from path, caching at module level."""
+        global _CACHED_RANKER_MODEL, _CACHED_RANKER_TOKENIZER, _CACHED_RANKER_PATH, _CACHED_RANKER_DEVICE
+        if _CACHED_RANKER_MODEL is not None and _CACHED_RANKER_PATH == path:
+            self.ranker_model = _CACHED_RANKER_MODEL
+            self.ranker_tokenizer = _CACHED_RANKER_TOKENIZER
+            self.ranker_device = _CACHED_RANKER_DEVICE
+            return
+
         try:
             import torch
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-            logger.info(f"Loading Extractor Ranker from {path}...")
+            dev_str = os.environ.get("SAAGA_EVALUATOR_DEVICE", "cpu")
+            self.ranker_device = torch.device(dev_str)
+            logger.info(f"Loading Extractor Ranker from {path} onto {self.ranker_device}...")
             self.ranker_tokenizer = AutoTokenizer.from_pretrained(path, local_files_only=True)
             self.ranker_model = AutoModelForSequenceClassification.from_pretrained(
                 path, local_files_only=True
             )
-            self.ranker_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             self.ranker_model.to(self.ranker_device)
             self.ranker_model.eval()
-            logger.info("✓ Extractor Ranker loaded successfully")
+            _CACHED_RANKER_MODEL = self.ranker_model
+            _CACHED_RANKER_TOKENIZER = self.ranker_tokenizer
+            _CACHED_RANKER_PATH = path
+            _CACHED_RANKER_DEVICE = self.ranker_device
+            logger.info(f"✓ Extractor Ranker loaded successfully on {self.ranker_device}")
         except Exception as e:
             logger.warning(f"Failed to load ranker from {path}: {e}; using probabilistic scoring")
             self.ranker_model = None
             self.ranker_tokenizer = None
-
     def _load_examples(self, path: str) -> list[dict[str, Any]]:
         """Load few-shot examples from JSONL."""
         if not path or not os.path.exists(path):

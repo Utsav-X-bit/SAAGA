@@ -41,8 +41,8 @@ class OpenAIProvider(BaseLLMProvider):
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: float = 300.0,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
+        max_retries: int = 5,
+        retry_delay: float = 2.0,
         max_workers: int = 16,
         default_headers: dict[str, str] | None = None,
         use_legacy_completions: bool = False,
@@ -82,8 +82,59 @@ class OpenAIProvider(BaseLLMProvider):
         self.default_headers = default_headers or {}
         self.use_legacy_completions = use_legacy_completions
         self.extra_body = extra_body or {}
-
+        self._system_role_supported = True
         self._session = self._create_session()
+        self._resolve_active_model_id()
+        if self.model_id and "gemma" in self.model_id.lower():
+            self._system_role_supported = False
+
+    def _adapt_messages(self, messages: list[dict[str, str]]) -> list[dict[str, str]]:
+        """Adapt message sequence for models that do not support system role (e.g. Gemma)."""
+        if self._system_role_supported:
+            return messages
+        adapted: list[dict[str, str]] = []
+        pending_system: list[str] = []
+        for m in messages:
+            if m.get("role") == "system":
+                pending_system.append(m.get("content", ""))
+            elif m.get("role") == "user":
+                if pending_system:
+                    prefix = "\n\n".join(pending_system)
+                    content = f"{prefix}\n\n{m.get('content', '')}" if m.get("content") else prefix
+                    adapted.append({"role": "user", "content": content})
+                    pending_system = []
+                else:
+                    adapted.append(m)
+            else:
+                adapted.append(m)
+        if pending_system:
+            adapted.insert(0, {"role": "user", "content": "\n\n".join(pending_system)})
+        return adapted
+    def _resolve_active_model_id(self) -> None:
+        """Probe endpoint to resolve served model ID (e.g. matching snapshot paths to HF names)."""
+        if not self.model_id:
+            return
+        try:
+            url = f"{self.api_base}/models"
+            headers = self._build_headers()
+            resp = self._session.get(url, headers=headers, timeout=2.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                models = [m.get("id") for m in data.get("data", []) if m.get("id")]
+                if not models or self.model_id in models:
+                    return
+                # Check for partial / snapshot path match
+                short_name = self.model_id.split("/")[-1].lower()
+                for m in models:
+                    if self.model_id.lower() in m.lower() or short_name in m.lower():
+                        logger.info(f"OpenAIProvider: mapped model_id '{self.model_id}' -> '{m}'")
+                        self.model_id = m
+                        return
+                if len(models) == 1:
+                    logger.info(f"OpenAIProvider: adopting single served model '{models[0]}' (requested '{self.model_id}')")
+                    self.model_id = models[0]
+        except Exception:
+            pass
 
     def _normalize_base_url(self, url: str) -> str:
         """Normalize URL ensuring proper protocol and no trailing slash."""
@@ -203,13 +254,25 @@ class OpenAIProvider(BaseLLMProvider):
         norm_messages = normalize_messages(messages)
         payload: dict[str, Any] = {
             "model": self.model_id,
-            "messages": norm_messages,
+            "messages": self._adapt_messages(norm_messages),
         }
         payload.update(self._extract_generation_params(kwargs))
         payload.update(self.extra_body)
 
-        data = self._post_with_retry("chat/completions", payload)
-
+        try:
+            data = self._post_with_retry("chat/completions", payload)
+        except RuntimeError as err:
+            err_str = str(err).lower()
+            if "system role not supported" in err_str or "system message not supported" in err_str:
+                logger.info(
+                    "OpenAIProvider: model %s rejected system role; switching to user message format",
+                    self.model_id,
+                )
+                self._system_role_supported = False
+                payload["messages"] = self._adapt_messages(norm_messages)
+                data = self._post_with_retry("chat/completions", payload)
+            else:
+                raise
         choices = data.get("choices", [])
         if not choices:
             raise ValueError(f"Empty choices received from OpenAI endpoint: {data}")

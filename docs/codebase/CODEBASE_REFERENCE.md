@@ -273,7 +273,7 @@ classDiagram
 #### `openai_provider.py`
 - **Full Path**: `src/saaga/providers/openai_provider.py`
 - **Primary Purpose**: High-performance HTTP client for OpenAI-compatible endpoints (vLLM server, Ollama `/v1`, DeepSeek, Together, Groq, OpenRouter).
-- **Key Features**: Persistent `requests.Session`, `urllib3` connection pooling, exponential backoff retries, and concurrent multi-threaded batch inference using `ThreadPoolExecutor`.
+- **Key Features**: Persistent `requests.Session`, `urllib3` connection pooling, exponential backoff retries (default `max_retries=5`, `retry_delay=2.0`), concurrent multi-threaded batch inference using `ThreadPoolExecutor`, automatic served-model-ID resolution against the endpoint's `/models` list, and transparent system-role adaptation for chat templates that reject `system` messages (e.g. Gemma): pending system content is merged into the next user message, with runtime fallback when the endpoint returns a "system role not supported" error.
 - **Key Classes**: `OpenAIProvider(BaseLLMProvider)`.
 
 #### `vllm_provider.py`
@@ -352,7 +352,7 @@ classDiagram
   - **Layer 2 (Quoted Text Extractor)**: Extracts double, single, triple, and backtick code block quotes (`QUOTED_PATTERNS`), filtering out 15 common conversational stopwords (`QUOTED_STOPWORDS`).
   - **Layer 3 (Capitalized Candidate Extractor)**: Identifies uppercase tokens and acronyms, excluding grammatical stopwords (`CAPITALIZED_STOP_WORDS`).
   - **Layer 4 (LLM Extractor)**: Prompt-based extractor using few-shot exemplars and JSON schemas to extract subtle semantic leaks.
-  - **Layer 5 (Candidate Ranking)**: DeBERTa sequence classification or heuristic frequency-based consensus ranking over historical attempt memory.
+  - **Layer 5 (Candidate Ranking)**: DeBERTa sequence classification or heuristic frequency-based consensus ranking over historical attempt memory. The ranker model is cached at module level (singleton), so repeated extractor instances reuse the loaded weights instead of reloading per scenario.
   - **Layer 6 (Replay Verification Hook)**: Dispatches top-ranked candidates to `ReplayVerifier` for live target confirmation.
 - **Key Classes**: `SensitiveInfoExtractor`.
 - **Callers**: `saaga.agents.controller`, `saaga.fuzzing.fallback`.
@@ -374,7 +374,7 @@ classDiagram
   $$f_{\text{judge}}(x) \in \{0, 1\}, \quad 0 = \text{ATTACK (continue)}, \quad 1 = \text{ATTEMPT (trigger extractor)}$$
 - **Key Classes**:
   - `DecisionType(IntEnum)`: Enum representing `ATTACK = 0` and `ATTEMPT = 1`.
-  - `StopPointIdentifier`: DistilBERT wrapper with lazy model loading, CUDA/CPU device management, and regex-based heuristic fallback (`_fallback_predict`) when model weights are absent.
+  - `StopPointIdentifier`: DistilBERT wrapper with lazy model loading, process-wide singleton caching of loaded weights, `SAAGA_EVALUATOR_DEVICE` override for device selection (falls back to CUDA auto-detection), and regex-based heuristic fallback (`_fallback_predict`) when model weights are absent.
 - **Callers**: `saaga.agents.controller`, `SAAGA/experiment/llama_3_8b_vllm.py`.
 
 #### `shape_predictor.py`
@@ -383,7 +383,7 @@ classDiagram
 - **Key Classes & Functions**:
   - `AccessCodeType(str, Enum)`: `TOKEN`, `PHRASE`, `SENTENCE`, `MULTILINE`.
   - `heuristic_categorize_code(access_code: str) -> str`: Deterministic length/word-count baseline.
-  - `AccessCodePredictor`: 4-class DistilBERT classifier predicting secret shape from system prompt text, providing structural guidance to the planner.
+  - `AccessCodePredictor`: 4-class DistilBERT classifier predicting secret shape from system prompt text, providing structural guidance to the planner. Loaded lazily with process-wide singleton caching and `SAAGA_EVALUATOR_DEVICE` device override.
 - **Callers**: `saaga.core.scenario`, `SAAGA/experiment/llama_3_8b_vllm.py`.
 
 ---

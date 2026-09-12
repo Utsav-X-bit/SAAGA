@@ -29,6 +29,11 @@ DEFAULT_DEFENSE_CLASSIFIER_PATH = os.environ.get(
     "SAAGA_DEFENSE_CLASSIFIER_MODEL", "models/defense_classifier"
 )
 FALLBACK_BASE_MODEL = "distilbert-base-uncased"
+# Module-level singleton caches for DefenseClassifier
+_CACHED_DC_MODEL: Optional[Any] = None
+_CACHED_DC_TOKENIZER: Optional[Any] = None
+_CACHED_DC_PATH: Optional[str] = None
+_CACHED_DC_DEVICE: Optional[str] = None
 
 LABEL_MAP: dict[int, str] = {
     0: "conditional",
@@ -91,12 +96,16 @@ class DefenseClassifier:
         if device:
             self.device_str = device
         else:
-            try:
-                import torch
+            configured_dev = os.environ.get("SAAGA_EVALUATOR_DEVICE")
+            if configured_dev:
+                self.device_str = configured_dev
+            else:
+                try:
+                    import torch
 
-                self.device_str = "cuda" if torch.cuda.is_available() else "cpu"
-            except ImportError:
-                self.device_str = "cpu"
+                    self.device_str = "cuda" if torch.cuda.is_available() else "cpu"
+                except ImportError:
+                    self.device_str = "cpu"
 
         self._is_loaded = self.model is not None and self.tokenizer is not None
         self._load_attempted = False
@@ -111,9 +120,15 @@ class DefenseClassifier:
 
         Returns True if successful, False if falling back to heuristic.
         """
+        global _CACHED_DC_MODEL, _CACHED_DC_TOKENIZER, _CACHED_DC_PATH, _CACHED_DC_DEVICE
         self._load_attempted = True
         path = model_path or self.model_path
-
+        if _CACHED_DC_MODEL is not None and _CACHED_DC_PATH == path:
+            self.model = _CACHED_DC_MODEL
+            self.tokenizer = _CACHED_DC_TOKENIZER
+            self.device_str = _CACHED_DC_DEVICE or self.device_str
+            self._is_loaded = True
+            return True
         try:
             import torch
             from transformers import AutoModelForSequenceClassification, AutoTokenizer

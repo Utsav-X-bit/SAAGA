@@ -130,3 +130,5 @@ graphify-out/
 Thumbs.db
 .env
 .env.*
+
+journal

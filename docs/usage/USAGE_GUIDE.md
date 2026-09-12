@@ -166,6 +166,10 @@ export HOST_IP="127.0.0.1"
 # Target offline translation device for NLLB-200 mutation fallback ('gpu' or 'cpu')
 export AUTORED_TL_DEVICE="gpu"
 
+# Force the compute device for evaluator classifiers (DefenseClassifier, ranker,
+# AccessCodePredictor); overrides CUDA auto-detection when set ('cuda' or 'cpu')
+export SAAGA_EVALUATOR_DEVICE="cpu"
+
 # Parallel worker concurrency for variant generation in mutation fallback
 export SAAGA_VARIANT_GEN_WORKERS=4
 

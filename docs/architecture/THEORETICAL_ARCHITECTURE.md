@@ -292,7 +292,7 @@ When deterministic matchers fail on complex, conversational, or obfuscated respo
 Layer 5 aggregates and scores all extracted candidates.
 
 #### Primary: Learned Sequence Classifier
-A fine-tuned DeBERTa-v3-base sequence classifier scores candidates conditioned on the victim response and the predicted secret shape:
+The learned ranker weights are cached at module level (process-wide singleton), so repeated extractor instances reuse the loaded model instead of reloading per scenario. Device placement honors the `SAAGA_EVALUATOR_DEVICE` environment variable (`cpu` by default); a fine-tuned DeBERTa-v3-base sequence classifier scores candidates conditioned on the victim response and the predicted secret shape:
 
 $$\text{Input} = R_{[:1500]} \oplus \text{" [SEP] "} \oplus c_{[:200]} \oplus \text{" [SEP] Type Probs: "} \oplus \mathbf{p}_{\text{shape}}$$
 
