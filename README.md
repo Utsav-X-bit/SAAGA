@@ -187,7 +187,7 @@ src/saaga/
 ```bibtex
 @article{saaga2026,
   title={SAAGA: Strategic and Adaptive Attack Generation for Red Teaming of LLMs},
-  author={SAAGA Research Team},
+  author={Utsav-X-Bit},
   year={2026}
 }
 ```
