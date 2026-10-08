@@ -182,12 +182,3 @@ src/saaga/
 
 ---
 
-## 📄 Citation
-
-```bibtex
-@article{saaga2026,
-  title={SAAGA: Strategic and Adaptive Attack Generation for Red Teaming of LLMs},
-  author={Utsav-X-Bit},
-  year={2026}
-}
-```
